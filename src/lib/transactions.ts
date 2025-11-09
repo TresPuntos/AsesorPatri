@@ -4,13 +4,15 @@ import type { Transaction } from "./types";
 export async function upsertTransactions(transactions: Transaction[]) {
   if (!transactions.length) return { inserted: 0 };
 
-  const monthKey = transactions[0]!.monthKey;
   const userId = transactions[0]!.userId;
+  const monthKeys = Array.from(new Set(transactions.map((tx) => tx.monthKey)));
 
-  await sql`
-    DELETE FROM transactions
-    WHERE user_id = ${userId} AND month_key = ${monthKey};
-  `;
+  for (const monthKey of monthKeys) {
+    await sql`
+      DELETE FROM transactions
+      WHERE user_id = ${userId} AND month_key = ${monthKey};
+    `;
+  }
 
   for (const tx of transactions) {
     const bankDate = tx.bankDate.toISOString().slice(0, 10);
