@@ -12,9 +12,14 @@ export async function upsertTransactions(transactions: Transaction[]) {
     WHERE user_id = ${userId} AND month_key = ${monthKey};
   `;
 
-  const values = transactions.map((tx) => sql`
-      (${tx.id}, ${tx.userId}, ${tx.bankDate}, ${tx.postedDate}, ${tx.description}, ${tx.rawConcept}, ${tx.observations}, ${tx.amount}, ${tx.category}, ${tx.subcategory}, ${tx.type}, ${tx.monthKey}, ${tx.source})
-    `);
+  const values = transactions.map((tx) => {
+    const bankDate = tx.bankDate.toISOString().slice(0, 10);
+    const postedDate = tx.postedDate ? tx.postedDate.toISOString().slice(0, 10) : null;
+
+    return sql`
+      (${tx.id}, ${tx.userId}, ${bankDate}, ${postedDate}, ${tx.description}, ${tx.rawConcept}, ${tx.observations}, ${tx.amount}, ${tx.category}, ${tx.subcategory}, ${tx.type}, ${tx.monthKey}, ${tx.source})
+    `;
+  });
 
   await sql`
     INSERT INTO transactions (
