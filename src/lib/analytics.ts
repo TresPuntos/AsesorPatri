@@ -178,6 +178,9 @@ export function createDashboardData(
       recommendations: [
         "Sube tu primer extracto para empezar el seguimiento y detectar oportunidades de ahorro.",
       ],
+      categoryBreakdownByMonth: {},
+      alertsByMonth: {},
+      recommendationsByMonth: {},
     };
   }
 
@@ -192,27 +195,41 @@ export function createDashboardData(
     .map(([, list]) => aggregateMonth(list))
     .sort((a, b) => (a.monthKey > b.monthKey ? 1 : -1));
 
+  const categoryBreakdownByMonth: Record<string, CategorySummary[]> = {};
+  const alertsByMonth: Record<string, string[]> = {};
+  const recommendationsByMonth: Record<string, string[]> = {};
+
+  history.forEach((summary, index) => {
+    const monthTransactions = grouped.get(summary.monthKey) ?? [];
+    const previousSummary = index > 0 ? history[index - 1] : undefined;
+    const previousMonthTransactions = previousSummary
+      ? grouped.get(previousSummary.monthKey) ?? []
+      : [];
+
+    const categories = buildCategorySummary(monthTransactions);
+    const previousCategories = buildCategorySummary(previousMonthTransactions);
+
+    categoryBreakdownByMonth[summary.monthKey] = categories;
+    alertsByMonth[summary.monthKey] = buildAlerts(
+      summary,
+      previousSummary,
+      categories,
+      previousCategories,
+      goal,
+    );
+    recommendationsByMonth[summary.monthKey] = buildRecommendations(
+      summary,
+      categories,
+      goal,
+    );
+  });
+
   const current = history.at(-1);
   const previous = history.length > 1 ? history.at(-2) : undefined;
 
-  const currentTransactions = current
-    ? grouped.get(current.monthKey) ?? []
+  const currentCategories = current
+    ? categoryBreakdownByMonth[current.monthKey] ?? []
     : [];
-  const previousTransactions = previous
-    ? grouped.get(previous.monthKey) ?? []
-    : [];
-
-  const currentCategories = buildCategorySummary(currentTransactions);
-  const previousCategories = buildCategorySummary(previousTransactions);
-
-  const alerts = buildAlerts(
-    current,
-    previous,
-    currentCategories,
-    previousCategories,
-    goal,
-  );
-  const recommendations = buildRecommendations(current, currentCategories, goal);
 
   return {
     goal,
@@ -220,8 +237,13 @@ export function createDashboardData(
     previousMonth: previous,
     history,
     categoryBreakdown: currentCategories,
-    alerts,
-    recommendations,
+    alerts: current ? alertsByMonth[current.monthKey] ?? [] : [],
+    recommendations: current
+      ? recommendationsByMonth[current.monthKey] ?? []
+      : [],
+    categoryBreakdownByMonth,
+    alertsByMonth,
+    recommendationsByMonth,
   };
 }
 

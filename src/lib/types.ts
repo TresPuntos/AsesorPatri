@@ -46,6 +46,9 @@ export interface DashboardData {
   categoryBreakdown: CategorySummary[];
   alerts: string[];
   recommendations: string[];
+  categoryBreakdownByMonth: Record<string, CategorySummary[]>;
+  alertsByMonth: Record<string, string[]>;
+  recommendationsByMonth: Record<string, string[]>;
 }
 
 

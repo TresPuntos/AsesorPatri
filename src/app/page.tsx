@@ -6,27 +6,8 @@ import { ensureDatabase } from "@/lib/db";
 import { getTransactions } from "@/lib/transactions";
 import { createDashboardData } from "@/lib/analytics";
 import type { Transaction } from "@/lib/types";
-import { DashboardHeader } from "@/components/dashboard/header";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { ProgressCard } from "@/components/dashboard/progress-card";
-import { AlertsCard } from "@/components/dashboard/alerts-card";
-import { RecommendationsCard } from "@/components/dashboard/recommendations-card";
-import { HistoryChart } from "@/components/dashboard/history-chart";
-import { UploadWidget } from "@/components/dashboard/upload-widget";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { EmptyState } from "@/components/dashboard/empty-state";
-
-const currency = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
-
-const percent = new Intl.NumberFormat("es-ES", {
-  style: "percent",
-  maximumFractionDigits: 1,
-});
+import { DashboardClient } from "@/components/dashboard/dashboard-client";
 
 async function Dashboard() {
   const connectionString =
@@ -51,101 +32,7 @@ async function Dashboard() {
     return <EmptyState />;
   }
 
-  const { currentMonth, previousMonth } = dashboard;
-  const incomeDelta =
-    previousMonth && previousMonth.income !== 0
-      ? (currentMonth.income - previousMonth.income) / previousMonth.income
-      : null;
-  const expenseDelta =
-    previousMonth && previousMonth.expenses !== 0
-      ? (currentMonth.expenses - previousMonth.expenses) / previousMonth.expenses
-      : null;
-  const balanceDelta =
-    previousMonth && previousMonth.balance !== 0
-      ? (currentMonth.balance - previousMonth.balance) / previousMonth.balance
-      : null;
-
-  const statCards = [
-    {
-      label: "Ingresos",
-      value: currency.format(currentMonth.income),
-      delta:
-        incomeDelta !== null
-          ? `${incomeDelta >= 0 ? "▲" : "▼"} ${percent.format(incomeDelta)} vs mes anterior`
-          : undefined,
-      tone: "positive" as const,
-      footer: "Incluye nómina y otras entradas de dinero.",
-    },
-    {
-      label: "Gastos",
-      value: currency.format(Math.abs(currentMonth.expenses)),
-      delta:
-        expenseDelta !== null
-          ? `${expenseDelta >= 0 ? "▲" : "▼"} ${percent.format(expenseDelta)} vs mes anterior`
-          : undefined,
-      tone: "negative" as const,
-      footer: `A un ritmo de ${currency.format(currentMonth.averageDailySpend)} al día.`,
-    },
-    {
-      label: "Balance del mes",
-      value: currency.format(currentMonth.balance),
-      delta:
-        balanceDelta !== null
-          ? `${balanceDelta >= 0 ? "▲" : "▼"} ${percent.format(balanceDelta)} vs mes anterior`
-          : undefined,
-      tone: currentMonth.balance >= 0 ? ("positive" as const) : ("negative" as const),
-      footer: "Objetivo de ahorro: 200 € mensuales.",
-    },
-  ];
-
-  return (
-    <div className="relative flex flex-col gap-10">
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[780px] w-[780px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_center,_rgba(34,211,238,0.12),transparent_65%)] blur-3xl" />
-        <div className="pointer-events-none absolute -left-32 top-32 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_center,_rgba(129,140,248,0.16),transparent_70%)] blur-3xl" />
-        <div className="pointer-events-none absolute -right-24 bottom-24 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.18),transparent_65%)] blur-3xl" />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
-          Patri • bienestar financiero
-        </span>
-        <ThemeToggle />
-      </div>
-
-      <DashboardHeader
-        currentSavings={currentMonth.savings}
-        monthLabel={currentMonth.label}
-      />
-
-      <section className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <ProgressCard goal={dashboard.goal} current={currentMonth.savings} />
-        </div>
-        <div className="lg:col-span-2">
-          <UploadWidget />
-        </div>
-      </section>
-
-      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {statCards.map((card) => (
-          <StatCard key={card.label} {...card} />
-        ))}
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <HistoryChart data={dashboard.history} />
-        </div>
-        <div className="flex flex-col gap-6">
-          <AlertsCard alerts={dashboard.alerts} />
-          <RecommendationsCard recommendations={dashboard.recommendations} />
-        </div>
-      </section>
-
-      <CategoryBreakdown categories={dashboard.categoryBreakdown} />
-    </div>
-  );
+  return <DashboardClient data={dashboard} />;
 }
 
 export default function Home() {
