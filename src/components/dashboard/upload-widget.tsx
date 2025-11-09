@@ -11,6 +11,7 @@ interface UploadState {
 
 export function UploadWidget() {
   const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const [state, setState] = useState<UploadState>({ status: "idle" });
 
@@ -20,6 +21,16 @@ export function UploadWidget() {
       className="flex flex-col gap-4 rounded-3xl border border-dashed border-cyan-400/40 bg-cyan-500/10 p-6 text-cyan-100 transition hover:border-cyan-300/80 hover:bg-cyan-500/20"
       onSubmit={(event) => {
         event.preventDefault();
+        const fileElement = fileInputRef.current;
+
+        if (!fileElement || !fileElement.files || fileElement.files.length === 0) {
+          setState({
+            status: "error",
+            message: "Selecciona primero el extracto que quieres analizar.",
+          });
+          return;
+        }
+
         const formData = new FormData(event.currentTarget);
 
         startTransition(async () => {
@@ -44,11 +55,11 @@ export function UploadWidget() {
           archivo.
         </span>
         <input
+          ref={fileInputRef}
           type="file"
           name="file"
           accept=".xlsx,.xls,.csv"
-          className="hidden"
-          required
+          className="sr-only"
         />
       </label>
       <button

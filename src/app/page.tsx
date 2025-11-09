@@ -1,4 +1,7 @@
 import { Suspense } from "react";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 import { ensureDatabase } from "@/lib/db";
 import { getTransactions } from "@/lib/transactions";
 import { createDashboardData } from "@/lib/analytics";
