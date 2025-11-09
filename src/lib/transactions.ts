@@ -32,13 +32,30 @@ export async function upsertTransactions(transactions: Transaction[]) {
   return { inserted: transactions.length };
 }
 
+interface TransactionRow {
+  id: string;
+  userId: string;
+  bankDate: string;
+  postedDate: string | null;
+  description: string | null;
+  rawConcept: string | null;
+  observations: string | null;
+  amount: number;
+  category: string | null;
+  subcategory: string | null;
+  type: string;
+  monthKey: string;
+  source: string | null;
+  createdAt: string | null;
+}
+
 export async function getTransactions(userId: string) {
-  const result = await sql<Transaction[]>`
+  const result = await sql<TransactionRow>`
     SELECT
       id,
       user_id as "userId",
-      bank_date as "bankDate",
-      posted_date as "postedDate",
+      bank_date::text as "bankDate",
+      posted_date::text as "postedDate",
       description,
       raw_concept as "rawConcept",
       observations,
@@ -48,7 +65,7 @@ export async function getTransactions(userId: string) {
       type,
       month_key as "monthKey",
       source,
-      created_at as "createdAt"
+      created_at::text as "createdAt"
     FROM transactions
     WHERE user_id = ${userId}
     ORDER BY bank_date ASC;
