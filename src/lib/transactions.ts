@@ -72,9 +72,19 @@ export async function getTransactions(userId: string) {
   `;
 
   return result.rows.map((row) => ({
-    ...row,
+    id: row.id,
+    userId: row.userId,
     bankDate: new Date(row.bankDate),
     postedDate: row.postedDate ? new Date(row.postedDate) : null,
+    description: row.description ?? "",
+    rawConcept: row.rawConcept ?? "",
+    observations: row.observations ?? "",
+    amount: row.amount,
+    category: row.category ?? "otros",
+    subcategory: row.subcategory ?? null,
+    type: (row.type as Transaction["type"]) ?? "expense",
+    monthKey: row.monthKey,
+    source: row.source ?? null,
     createdAt: row.createdAt ? new Date(row.createdAt) : undefined,
   }));
 }
