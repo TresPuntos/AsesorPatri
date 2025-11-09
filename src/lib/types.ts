@@ -1,0 +1,51 @@
+export type TransactionType = "income" | "expense";
+
+export interface Transaction {
+  id: string;
+  userId: string;
+  bankDate: Date;
+  postedDate: Date | null;
+  description: string;
+  rawConcept: string;
+  observations: string | null;
+  amount: number;
+  category: string;
+  subcategory: string | null;
+  type: TransactionType;
+  monthKey: string;
+  source: string | null;
+  createdAt?: Date;
+}
+
+export interface CategorySummary {
+  category: string;
+  total: number;
+  percentage: number;
+  trend?: number;
+  type: TransactionType;
+}
+
+export interface MonthSummary {
+  monthKey: string;
+  label: string;
+  month: number;
+  year: number;
+  income: number;
+  expenses: number;
+  balance: number;
+  savings: number;
+  averageDailySpend: number;
+  daysTracked: number;
+}
+
+export interface DashboardData {
+  goal: number;
+  currentMonth?: MonthSummary;
+  previousMonth?: MonthSummary;
+  history: MonthSummary[];
+  categoryBreakdown: CategorySummary[];
+  alerts: string[];
+  recommendations: string[];
+}
+
+

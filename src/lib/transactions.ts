@@ -1,0 +1,60 @@
+import { sql } from "./db";
+import type { Transaction } from "./types";
+
+export async function upsertTransactions(transactions: Transaction[]) {
+  if (!transactions.length) return { inserted: 0 };
+
+  const monthKey = transactions[0]!.monthKey;
+  const userId = transactions[0]!.userId;
+
+  await sql`
+    DELETE FROM transactions
+    WHERE user_id = ${userId} AND month_key = ${monthKey};
+  `;
+
+  const values = transactions.map((tx) => sql`
+      (${tx.id}, ${tx.userId}, ${tx.bankDate}, ${tx.postedDate}, ${tx.description}, ${tx.rawConcept}, ${tx.observations}, ${tx.amount}, ${tx.category}, ${tx.subcategory}, ${tx.type}, ${tx.monthKey}, ${tx.source})
+    `);
+
+  await sql`
+    INSERT INTO transactions (
+      id, user_id, bank_date, posted_date, description, raw_concept, observations,
+      amount, category, subcategory, type, month_key, source
+    )
+    VALUES ${sql.join(values, sql`, `)};
+  `;
+
+  return { inserted: transactions.length };
+}
+
+export async function getTransactions(userId: string) {
+  const result = await sql<Transaction[]>`
+    SELECT
+      id,
+      user_id as "userId",
+      bank_date as "bankDate",
+      posted_date as "postedDate",
+      description,
+      raw_concept as "rawConcept",
+      observations,
+      amount::float as "amount",
+      category,
+      subcategory,
+      type,
+      month_key as "monthKey",
+      source,
+      created_at as "createdAt"
+    FROM transactions
+    WHERE user_id = ${userId}
+    ORDER BY bank_date ASC;
+  `;
+
+  return result.rows.map((row) => ({
+    ...row,
+    bankDate: new Date(row.bankDate),
+    postedDate: row.postedDate ? new Date(row.postedDate) : null,
+    createdAt: row.createdAt ? new Date(row.createdAt) : undefined,
+  }));
+}
+
+
