@@ -1,4 +1,5 @@
 import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 import type {
   CategorySummary,
   DashboardData,
@@ -6,11 +7,29 @@ import type {
   Transaction,
 } from "./types";
 
+const PRESET_CATEGORIES = [
+  "Suministros",
+  "Ocio y Entretenimiento",
+  "Vivienda y Préstamos",
+  "Transferencias y Efectivo",
+  "BBVA",
+  "Otros Gastos Generales",
+  "Salud y Cuidado",
+  "Moto",
+  "Supermercado",
+  "Otros Ingresos",
+  "Ahorro",
+  "Educación",
+  "Viajes",
+  "Impuestos",
+  "Mascotas",
+];
+
 function monthLabel(monthKey: string) {
   const [year, month] = monthKey.split("-").map(Number);
   const iso = `${monthKey}-01`;
   return {
-    label: format(parseISO(iso), "LLLL yyyy"),
+    label: format(parseISO(iso), "LLLL yyyy", { locale: es }),
     month,
     year,
   };
@@ -181,6 +200,8 @@ export function createDashboardData(
       categoryBreakdownByMonth: {},
       alertsByMonth: {},
       recommendationsByMonth: {},
+      transactionsByMonth: {},
+      categoryOptions: PRESET_CATEGORIES,
     };
   }
 
@@ -190,6 +211,22 @@ export function createDashboardData(
     existing.push(tx);
     grouped.set(tx.monthKey, existing);
   });
+
+  const transactionsByMonth: Record<string, Transaction[]> = {};
+  grouped.forEach((list, key) => {
+    transactionsByMonth[key] = [...list].sort(
+      (a, b) => a.bankDate.getTime() - b.bankDate.getTime(),
+    );
+  });
+
+  const categoryOptions = Array.from(
+    new Set([
+      ...PRESET_CATEGORIES,
+      ...transactions
+        .map((tx) => tx.category?.trim() ?? "")
+        .filter((category) => category.length > 0),
+    ]),
+  ).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
 
   const history = Array.from(grouped.entries())
     .map(([, list]) => aggregateMonth(list))
@@ -244,6 +281,8 @@ export function createDashboardData(
     categoryBreakdownByMonth,
     alertsByMonth,
     recommendationsByMonth,
+    transactionsByMonth,
+    categoryOptions,
   };
 }
 

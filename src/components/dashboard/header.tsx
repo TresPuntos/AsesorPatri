@@ -1,16 +1,73 @@
 "use client";
 
 import { motion } from "framer-motion";
+import type { MonthSummary } from "@/lib/types";
+
+const currency = new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0,
+});
 
 interface DashboardHeaderProps {
-  currentSavings?: number;
-  monthLabel?: string;
+  summary?: MonthSummary;
+  goal: number;
 }
 
-export function DashboardHeader({
-  currentSavings,
-  monthLabel,
-}: DashboardHeaderProps) {
+function capitalize(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function buildMessaging(summary: MonthSummary, goal: number) {
+  const savings = summary.savings;
+  const goalAchieved = savings >= goal;
+  const positive = savings >= 0;
+  const gap = goal - savings;
+
+  if (goalAchieved) {
+    return {
+      title: "¡Objetivo conseguido, Patri! 🚀",
+      body: `${capitalize(summary.label)}: Has ahorrado ${currency.format(
+        savings,
+      )}. Reserva parte de este impulso para tus metas cripto.`,
+    };
+  }
+
+  if (positive && gap <= goal * 0.25) {
+    return {
+      title: "Lo tienes al alcance, Patri 🙌",
+      body: `${capitalize(
+        summary.label,
+      )}: Llevas ${currency.format(
+        savings,
+      )} acumulados. Con ${currency.format(gap)} más, alcanzamos el reto.`,
+    };
+  }
+
+  if (positive) {
+    return {
+      title: "Seguimos sumando, Patri ⚡️",
+      body: `${capitalize(
+        summary.label,
+      )}: Ya ahorraste ${currency.format(
+        savings,
+      )}. Ajustemos algunos gastos para cubrir los ${currency.format(
+        gap,
+      )} que faltan.`,
+    };
+  }
+
+  return {
+    title: "Toca remontar, Patri 💡",
+    body: `${capitalize(summary.label)}: Vamos ${currency.format(
+      Math.abs(savings),
+    )} por debajo. Revisemos ocio y suscripciones para darle la vuelta este mes.`,
+  };
+}
+
+export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
+  const messaging = summary ? buildMessaging(summary, goal) : null;
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -8 }}
@@ -24,21 +81,12 @@ export function DashboardHeader({
           Dashboard financiero mensual
         </span>
         <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-          Buen mes, Patri 💪
+          {messaging ? messaging.title : "Organiza tus finanzas, Patri 🌟"}
         </h1>
         <p className="max-w-xl text-sm text-white/70">
-          {currentSavings !== undefined ? (
-            <>
-              {monthLabel ? `${monthLabel}: ` : null}
-              Has ahorrado{" "}
-              <span className="font-semibold text-cyan-200">
-                {currentSavings.toFixed(0)} €
-              </span>
-              . Cada euro cuenta para llegar a tu libertad financiera.
-            </>
-          ) : (
-            "Sube tu extracto para ver cómo va tu plan de ahorro y recibir consejos al instante."
-          )}
+          {messaging
+            ? messaging.body
+            : "Sube tu extracto para ver cómo va tu plan de ahorro y recibir consejos al instante."}
         </p>
       </div>
     </motion.header>

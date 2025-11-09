@@ -41,6 +41,12 @@ function monthKeyFromDate(date: Date): string {
   return `${date.getFullYear()}-${month}`;
 }
 
+function normalizeCell(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value.trim();
+  return value.toString().trim();
+}
+
 export function parseWorkbookToTransactions(
   arrayBuffer: ArrayBuffer,
   {
@@ -52,7 +58,10 @@ export function parseWorkbookToTransactions(
   } = {},
 ): Transaction[] {
   const workbook = read(arrayBuffer, { type: "array" });
-  const sheetName = workbook.SheetNames[0];
+  const sheetName =
+    workbook.SheetNames.find((name) =>
+      name.toLowerCase().includes("informe"),
+    ) ?? workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
   const rows = utils.sheet_to_json<Record<string, unknown>>(sheet, {
     defval: null,
@@ -71,12 +80,21 @@ export function parseWorkbookToTransactions(
       const concept = row["Concepto"]?.toString() ?? "";
       const observations = row["Observaciones"]?.toString() ?? "";
       const movimiento = row["Movimiento"]?.toString() ?? "";
+      const fileSubcategory =
+        normalizeCell(row["Subcatergoria"]) ||
+        normalizeCell(row["Subcategoría"]);
+      const fileCategory =
+        normalizeCell(row["Categoria"]) ||
+        normalizeCell(row["Categoría"]);
 
-      const { category, type } = categorizeTransaction({
+      const inferred = categorizeTransaction({
         concept: `${concept} ${movimiento}`.trim(),
         observations,
         amount,
       });
+
+      const category = fileCategory || inferred.category;
+      const type = amount >= 0 ? "income" : inferred.type;
 
       const monthKey = monthKeyFromDate(valueDate);
 
@@ -90,8 +108,8 @@ export function parseWorkbookToTransactions(
         observations,
         amount,
         category,
-        subcategory: movimiento || null,
-        type: amount >= 0 ? "income" : type,
+        subcategory: fileSubcategory || movimiento || null,
+        type,
         monthKey,
         source: filename ?? sheetName,
       };

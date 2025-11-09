@@ -1,6 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
+import {
+  Cell,
+  Label,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 import type { CategorySummary } from "@/lib/types";
 
 interface CategoryBreakdownProps {
@@ -21,21 +29,73 @@ const palette: Record<string, string> = {
   otros: "from-slate-400/80 via-slate-500/40 to-slate-900/50",
 };
 
+const chartColors: Record<string, string> = {
+  ingresos: "#34d399",
+  alimentacion: "#fb923c",
+  hogar: "#38bdf8",
+  transporte: "#a855f7",
+  ocio: "#f472b6",
+  salud: "#14b8a6",
+  educacion: "#22d3ee",
+  tecnologia: "#6366f1",
+  viajes: "#f9739d",
+  transferencias: "#facc15",
+  otros: "#94a3b8",
+};
+
 const currency = new Intl.NumberFormat("es-ES", {
   style: "currency",
   currency: "EUR",
   maximumFractionDigits: 0,
 });
 
+const CustomTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null;
+  const { name, value, type, share } = payload[0].payload;
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/85 px-4 py-3 text-sm text-white shadow-xl backdrop-blur">
+      <p className="font-semibold capitalize">{name}</p>
+      <p className={type === "expense" ? "text-rose-300" : "text-emerald-300"}>
+        {type === "expense" ? "-" : "+"}
+        {currency.format(value)}
+      </p>
+      <p className="text-xs text-white/60">{share.toFixed(1)} % del total del mes</p>
+    </div>
+  );
+};
+
 export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
   if (!categories.length) {
     return null;
   }
 
-  const biggest = categories.reduce((max, current) => {
-    const value = current.type === "expense" ? Math.abs(current.total) : current.total;
-    return value > max ? value : max;
-  }, 0);
+  const chartData = categories.map((category) => {
+    const value =
+      category.type === "expense"
+        ? Math.abs(category.total)
+        : category.total;
+
+    return {
+      name: category.category,
+      value,
+      type: category.type,
+      color: chartColors[category.category] ?? chartColors.otros,
+    };
+  });
+
+  const totalValue = chartData.reduce((sum, item) => sum + item.value, 0);
+  const shareMap = new Map(
+    chartData.map((item) => [
+      item.name,
+      totalValue === 0 ? 0 : (item.value / totalValue) * 100,
+    ]),
+  );
+
+  const biggest = chartData.reduce(
+    (max, item) => (item.value > max ? item.value : max),
+    0,
+  );
 
   return (
     <motion.section
@@ -52,53 +112,93 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
           Categorías clave este mes
         </h2>
         <p className="text-sm text-white/60">
-          Identifica los focos de gasto y las categorías que impulsan tu ahorro.
+          Visualiza la mezcla de gastos e ingresos y detecta rápidamente los focos de ahorro.
         </p>
       </header>
-      <ul className="mt-6 space-y-4">
-        {categories.map((category) => {
-          const value =
-            category.type === "expense"
-              ? Math.abs(category.total)
-              : category.total;
-          const progress = biggest === 0 ? 0 : (value / biggest) * 100;
-          const tone = category.type === "expense" ? "text-rose-300" : "text-emerald-300";
-          return (
-            <li
-              key={category.category}
-              className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 p-4 backdrop-blur"
-            >
-              <div
-                className={`pointer-events-none absolute inset-0 opacity-70 blur-3xl bg-gradient-to-r ${palette[category.category] ?? palette.otros}`}
-                style={{ width: `${Math.max(progress, 15)}%` }}
-              />
-              <div className="relative flex flex-col gap-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="uppercase tracking-[0.24em] text-white/70">
-                    {category.category}
-                  </span>
-                  <span className={`${tone} font-semibold`}>
-                    {category.type === "expense" ? "-" : "+"}
-                    {currency.format(value)}
-                  </span>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[320px,1fr] lg:items-center">
+        <div className="rounded-2xl border border-white/5 bg-white/5 p-6 backdrop-blur">
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData.map((item) => ({
+                    ...item,
+                    share: shareMap.get(item.name) ?? 0,
+                  }))}
+                  innerRadius="58%"
+                  outerRadius="88%"
+                  paddingAngle={4}
+                  dataKey="value"
+                  nameKey="name"
+                  stroke="rgba(15,23,42,0.85)"
+                  strokeWidth={1}
+                >
+                  {chartData.map((item) => (
+                    <Cell key={item.name} fill={item.color} />
+                  ))}
+                  <Label position="center">
+                    <div className="text-center text-xs uppercase tracking-[0.3em] text-white/60">
+                      Total mes
+                      <span className="mt-2 block text-lg font-semibold tracking-normal text-white">
+                        {currency.format(totalValue)}
+                      </span>
+                    </div>
+                  </Label>
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <ul className="space-y-4">
+          {categories.map((category) => {
+            const value =
+              category.type === "expense"
+                ? Math.abs(category.total)
+                : category.total;
+            const progress = biggest === 0 ? 0 : (value / biggest) * 100;
+            const tone =
+              category.type === "expense" ? "text-rose-300" : "text-emerald-300";
+            const share = shareMap.get(category.category) ?? 0;
+
+            return (
+              <li
+                key={category.category}
+                className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 p-4 backdrop-blur"
+              >
+                <div
+                  className={`pointer-events-none absolute inset-0 opacity-70 blur-3xl bg-gradient-to-r ${palette[category.category] ?? palette.otros}`}
+                  style={{ width: `${Math.max(progress, 15)}%` }}
+                />
+                <div className="relative flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="uppercase tracking-[0.24em] text-white/70">
+                      {category.category}
+                    </span>
+                    <span className={`${tone} font-semibold`}>
+                      {category.type === "expense" ? "-" : "+"}
+                      {currency.format(value)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-white/60">
+                    <span>
+                      {totalValue === 0
+                        ? "Sin impacto relevante este mes."
+                        : `Representa el ${share.toFixed(0)} % del total.`}
+                    </span>
+                    <span className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.3em] text-white/60">
+                      {category.type === "expense" ? "Gasto" : "Ingreso"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-xs text-white/60">
-                  <span>
-                    {category.type === "expense"
-                      ? `Representa el ${category.percentage.toFixed(0)} % de tus gastos.`
-                      : "Impulsa tu ahorro este mes."}
-                  </span>
-                  <span className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.3em] text-white/60">
-                    {category.type === "expense" ? "Gasto" : "Ingreso"}
-                  </span>
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </motion.section>
   );
 }
-
 
