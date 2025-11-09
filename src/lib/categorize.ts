@@ -1,113 +1,105 @@
-import { TransactionType } from "./types";
+import type { TransactionType } from "./types";
 
-const CATEGORY_KEYWORDS: Record<
-  string,
-  { includes: string[]; type: TransactionType }
-> = {
-  ingresos: {
-    includes: ["nomina", "recibido", "transferencia", "devolucion", "bizum"],
+interface CategorizationRule {
+  keywords: string[];
+  category: string;
+  type?: TransactionType;
+}
+
+const RULES: CategorizationRule[] = [
+  {
+    keywords: ["nomina", "salario", "payroll"],
+    category: "Transferencias y Efectivo",
     type: "income",
   },
-  alimentacion: {
-    includes: [
-      "super",
-      "mercadona",
-      "carrefour",
-      "aldi",
-      "lid",
-      "lidl",
-      "caprabo",
-      "hipercor",
-      "ahorro",
-      "rest",
-      "cafe",
+  {
+    keywords: ["bizum", "bizoom", "transferencia", "transfer", "traspaso"],
+    category: "Transferencias y Efectivo",
+  },
+  {
+    keywords: ["bit2me", "bit 2 me", "cripto"],
+    category: "Transferencias y Efectivo",
+  },
+  {
+    keywords: ["efectivo", "cajero"],
+    category: "Transferencias y Efectivo",
+  },
+  {
+    keywords: ["hipoteca", "bbva seguro", "seguro hogar", "cuota mensual de fraccionamiento", "fincas", "casa"],
+    category: "Vivienda y Préstamos",
+  },
+  {
+    keywords: ["alquiler"],
+    category: "Vivienda y Préstamos",
+  },
+  {
+    keywords: ["agua", "luz", "electricidad", "gas", "iberdrola", "endesa", "vodafone", "fibra", "movistar"],
+    category: "Suministros",
+  },
+  {
+    keywords: ["gasolina", "repsol", "itv", "parking", "peaje", "carburante"],
+    category: "Moto",
+  },
+  {
+    keywords: ["super", "mercadona", "carrefour", "lidl", "aldi", "hipercor", "caprabo", "eroski", "ahorro"],
+    category: "Supermercado",
+  },
+  {
+    keywords: ["mascotas", "pienso", "pet"],
+    category: "Supermercado",
+  },
+  {
+    keywords: ["donacion", "transporte", "tmb", "metro", "bus", "taxi", "cabify", "uber", "tabaco"],
+    category: "Otros Gastos Generales",
+  },
+  {
+    keywords: ["farmacia", "dent", "dentista", "medico", "clinica"],
+    category: "Salud y Cuidado",
+  },
+  {
+    keywords: ["gimnas", "gym", "peluqueria", "uñas"],
+    category: "Ocio y Entretenimiento",
+  },
+  {
+    keywords: [
       "bar",
-      "pan",
-      "food",
-    ],
-    type: "expense",
-  },
-  hogar: {
-    includes: [
-      "energia",
-      "gas",
-      "agua",
-      "iberdrola",
-      "alquiler",
-      "hipoteca",
-      "amazon.es",
-      "leroy",
-      "ikea",
-    ],
-    type: "expense",
-  },
-  transporte: {
-    includes: [
-      "cabify",
-      "uber",
-      "bolt",
-      "petrol",
-      "gasolinera",
-      "repsol",
-      "cepsa",
-      "renfe",
-      "metro",
-      "bus",
-      "taxi",
-      "motosharing",
-    ],
-    type: "expense",
-  },
-  ocio: {
-    includes: [
-      "netflix",
-      "spotify",
+      "rest",
+      "restaurante",
+      "cafeteria",
+      "ocio",
       "cine",
       "teatro",
       "concierto",
-      "fest",
+      "spotify",
+      "podimo",
+      "apple cloud",
+      "icloud",
+      "netflix",
+      "netfix",
+      "prime",
+      "amazon prime",
+      "viajes",
+      "booking",
+      "airbnb",
+      "compras",
+      "druni",
       "zara",
       "shein",
       "h&m",
-      "primark",
-      "ocio",
-      "entradas",
-      "booking",
-      "airbnb",
     ],
-    type: "expense",
+    category: "Ocio y Entretenimiento",
   },
-  salud: {
-    includes: [
-      "farmacia",
-      "dent",
-      "medico",
-      "clinica",
-      "seguro",
-      "gimnas",
-      "gym",
-      "fisi",
-      "fisio",
-    ],
-    type: "expense",
+  {
+    keywords: ["bbva", "comision"],
+    category: "BBVA",
   },
-  educacion: {
-    includes: ["curso", "formacion", "suscripcion", "udemy", "platzi"],
-    type: "expense",
+  {
+    keywords: ["renta 2024", "tributo", "hacienda"],
+    category: "Transferencias y Efectivo",
   },
-  tecnologia: {
-    includes: ["apple", "iphone", "spotify", "google", "microsoft", "software", "ics"],
-    type: "expense",
-  },
-  viajes: {
-    includes: ["hotel", "airbnb", "ryanair", "vueling", "viaje"],
-    type: "expense",
-  },
-  transferencias: {
-    includes: ["transferencia", "bizum", "trf"],
-    type: "expense",
-  },
-};
+];
+
+const DEFAULT_CATEGORY = "Otros Gastos Generales";
 
 export function categorizeTransaction({
   concept,
@@ -118,19 +110,22 @@ export function categorizeTransaction({
   observations?: string | null;
   amount: number;
 }): { category: string; type: TransactionType } {
-  if (amount > 0) {
-    return { category: "ingresos", type: "income" };
-  }
-
   const haystack = `${concept ?? ""} ${observations ?? ""}`.toLowerCase();
 
-  for (const [category, data] of Object.entries(CATEGORY_KEYWORDS)) {
-    if (data.includes.some((needle) => haystack.includes(needle))) {
-      return { category, type: data.type };
+  for (const rule of RULES) {
+    if (rule.keywords.some((keyword) => haystack.includes(keyword))) {
+      return {
+        category: rule.category,
+        type: rule.type ?? (amount >= 0 ? "income" : "expense"),
+      };
     }
   }
 
-  return { category: "otros", type: amount >= 0 ? "income" : "expense" };
+  if (amount > 0) {
+    return { category: "Transferencias y Efectivo", type: "income" };
+  }
+
+  return { category: DEFAULT_CATEGORY, type: "expense" };
 }
 
 

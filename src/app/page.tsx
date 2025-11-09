@@ -26,7 +26,7 @@ async function Dashboard() {
     }
   }
 
-  const dashboard = createDashboardData(transactions, 200);
+  const dashboard = await createDashboardData(transactions, 200);
 
   if (!dashboard.currentMonth) {
     return <EmptyState />;
@@ -41,15 +41,40 @@ export default function Home() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-12">
         <header className="flex flex-col gap-2">
           <p className="text-sm uppercase tracking-[0.3em] text-slate-500">
-            Dashboard financiero mensual de Patri
+            Tu asistente financiero personal, Patri
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
-            Controla tus finanzas con claridad y emoción cripto.
-          </h1>
-          <p className="max-w-2xl text-sm text-slate-400">
-            Analiza tus movimientos bancarios, visualiza el progreso hacia los 200 € de ahorro
-            mensual y recibe recomendaciones accionables para cuidar tu bienestar económico.
-          </p>
+          <div className="flex flex-col gap-4 rounded-3xl border border-white/5 bg-white/5 p-6 text-sm text-slate-200 shadow-xl shadow-black/30 backdrop-blur">
+            <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
+              Vamos a ahorrar juntas, con calma y buena energía.
+            </h1>
+            <p className="max-w-2xl text-slate-200">
+              Te ayudo a entender tus movimientos, a detectar dónde ajustar un poquito y a celebrar
+              cada paso hacia ese colchón de 200 € al mes. Nada de agobios: solo claridad, cariño y
+              un plan que puedes cumplir.
+            </p>
+            <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-black/40 p-4 text-sm text-white/80">
+              <p className="font-medium text-white">
+                Patri, este mes podrías probar:
+              </p>
+              <ul className="list-disc space-y-1 pl-5 text-slate-200">
+                <li>
+                  Guardar primero 50 € nada más cobrar y dejarlos “fuera de la vista” en tu cuenta
+                  cripto.
+                </li>
+                <li>
+                  Revisar suscripciones en Ocio y cancelar lo que no estés usando. Con dos ajustes
+                  pequeños te acercas al objetivo.
+                </li>
+                <li>
+                  Practicar un día “low-cost”: comida casera + plan gratis. Lo notarás en los gastos
+                  de Supermercado y Ocio.
+                </li>
+              </ul>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                Estoy aquí para animarte, no para regañarte ✨
+              </p>
+            </div>
+          </div>
         </header>
 
         <Suspense

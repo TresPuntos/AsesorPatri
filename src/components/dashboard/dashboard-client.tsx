@@ -12,7 +12,6 @@ import { RecommendationsCard } from "./recommendations-card";
 import { CategoryBreakdown } from "./category-breakdown";
 import { TransactionsTable } from "./transactions-table";
 import { ThemeToggle } from "../theme-toggle";
-import { SavingsAccumulationChart } from "./savings-accumulation-chart";
 
 const currency = new Intl.NumberFormat("es-ES", {
   style: "currency",
@@ -192,8 +191,6 @@ export function DashboardClient({ data }: DashboardClientProps) {
 
       {activeTab === "overview" ? (
         <>
-          <SavingsAccumulationChart data={data.history} goal={data.goal} />
-
           <section className="grid gap-6 lg:grid-cols-5">
             <div className="lg:col-span-3">
               <ProgressCard goal={data.goal} current={selectedSummary.savings} />

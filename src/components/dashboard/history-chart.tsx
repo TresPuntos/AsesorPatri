@@ -1,35 +1,60 @@
 "use client";
 
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import type { MonthSummary } from "@/lib/types";
 
 interface HistoryChartProps {
   data: MonthSummary[];
 }
 
+const currency = new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0,
+});
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
 
   const income = payload.find((item: any) => item.dataKey === "income")?.value ?? 0;
   const expenses = payload.find((item: any) => item.dataKey === "expenses")?.value ?? 0;
-  const savings = payload.find((item: any) => item.dataKey === "balance")?.value ?? 0;
+  const balance = payload.find((item: any) => item.dataKey === "balance")?.value ?? 0;
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/80 px-4 py-3 text-sm text-white shadow-xl backdrop-blur">
       <p className="font-semibold">{label}</p>
-      <p className="text-emerald-300">Ingresos: {income.toFixed(0)} €</p>
-      <p className="text-rose-300">Gastos: {Math.abs(expenses).toFixed(0)} €</p>
-      <p className="text-cyan-200">Ahorro: {savings.toFixed(0)} €</p>
+      <p className="text-cyan-200">Ingresos: {currency.format(income)}</p>
+      <p className="text-rose-300">
+        Gastos: {currency.format(Math.abs(expenses))}
+      </p>
+      <p className={balance >= 0 ? "text-emerald-300" : "text-rose-200"}>
+        Balance: {currency.format(balance)}
+      </p>
     </div>
   );
 };
 
+function capitalize(label: string) {
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 export function HistoryChart({ data }: HistoryChartProps) {
   const chartData = data.map((month) => ({
-    name: month.label,
+    name: capitalize(month.label),
     income: month.income,
     expenses: month.expenses,
-    balance: month.savings,
+    balance: month.balance,
   }));
 
   return (
@@ -40,35 +65,67 @@ export function HistoryChart({ data }: HistoryChartProps) {
             Evolución mensual
           </p>
           <p className="mt-2 text-xl font-semibold tracking-tight text-white">
-            Ingresos, gastos y ahorro acumulado
+            Ingresos, gastos y balance del mes
           </p>
         </div>
       </div>
       <div className="mt-6 h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 10, right: 16, left: 0, bottom: 0 }}
+          >
             <defs>
-              <linearGradient id="income" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="expenses" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.7} />
-                <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="balance" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#34d399" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#34d399" stopOpacity={0} />
+              <linearGradient id="expensesFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(244,63,94,0.65)" />
+                <stop offset="100%" stopColor="rgba(244,63,94,0.15)" />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-            <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" />
-            <YAxis stroke="rgba(255,255,255,0.4)" tickFormatter={(value) => `${value}€`} />
+            <XAxis
+              dataKey="name"
+              stroke="rgba(255,255,255,0.4)"
+              tick={{ fill: "rgba(255,255,255,0.65)", fontSize: 12 }}
+            />
+            <YAxis
+              stroke="rgba(255,255,255,0.4)"
+              tickFormatter={(value) => currency.format(value)}
+              tick={{ fill: "rgba(255,255,255,0.65)", fontSize: 12 }}
+            />
             <Tooltip content={<CustomTooltip />} />
-            <Area type="monotone" dataKey="income" stroke="#22d3ee" fill="url(#income)" strokeWidth={2} />
-            <Area type="monotone" dataKey="expenses" stroke="#f43f5e" fill="url(#expenses)" strokeWidth={2} />
-            <Area type="monotone" dataKey="balance" stroke="#34d399" fill="url(#balance)" strokeWidth={2} />
-          </AreaChart>
+            <Legend
+              wrapperStyle={{
+                fontSize: 12,
+                color: "rgba(255,255,255,0.6)",
+              }}
+            />
+            <ReferenceLine y={0} stroke="rgba(255,255,255,0.3)" strokeDasharray="4 4" />
+            <Bar
+              name="Gastos"
+              dataKey="expenses"
+              barSize={18}
+              fill="url(#expensesFill)"
+              radius={[12, 12, 12, 12]}
+            />
+            <Line
+              name="Ingresos"
+              type="monotone"
+              dataKey="income"
+              stroke="#22d3ee"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
+            />
+            <Line
+              name="Balance"
+              type="monotone"
+              dataKey="balance"
+              stroke="#34d399"
+              strokeWidth={2.5}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>

@@ -6,6 +6,7 @@ import type {
   MonthSummary,
   Transaction,
 } from "./types";
+import { generateAIInsights, type InsightFacts } from "./insights";
 
 const PRESET_CATEGORIES = [
   "Suministros",
@@ -184,10 +185,185 @@ function buildRecommendations(
   return recs.slice(0, 3);
 }
 
-export function createDashboardData(
+function mergeWithFallback(
+  primary: string[] | null | undefined,
+  fallback: string[],
+  limit = 3,
+): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  const append = (items: string[] | null | undefined) => {
+    if (!items) return;
+    items.forEach((item) => {
+      const trimmed = item.trim();
+      if (!trimmed || seen.has(trimmed)) return;
+      seen.add(trimmed);
+      result.push(trimmed);
+    });
+  };
+
+  append(primary);
+
+  if (result.length < limit) {
+    append(fallback);
+  }
+
+  return result.slice(0, limit);
+}
+
+function buildInsightFacts(
+  current: MonthSummary,
+  previous: MonthSummary | undefined,
+  categories: CategorySummary[],
+  previousCategories: CategorySummary[],
+  baselineAlerts: string[],
+  baselineRecommendations: string[],
+  goal: number,
+): InsightFacts {
+  const absoluteExpenses = Math.abs(current.expenses);
+  const absolutePreviousExpenses = previous
+    ? Math.abs(previous.expenses)
+    : undefined;
+
+  const incomeChangePercent =
+    previous && previous.income !== 0
+      ? (current.income - previous.income) / Math.abs(previous.income)
+      : undefined;
+
+  const expenseChangePercent =
+    previous && absolutePreviousExpenses
+      ? (absoluteExpenses - absolutePreviousExpenses) / absolutePreviousExpenses
+      : undefined;
+
+  const balanceChangePercent =
+    previous && previous.balance !== 0
+      ? (current.balance - previous.balance) / Math.abs(previous.balance)
+      : undefined;
+
+  const previousCategoryMap = new Map(
+    previousCategories.map((item) => [item.category, item]),
+  );
+
+  const categoryInsights = categories.map((category) => {
+    const previousCategory = previousCategoryMap.get(category.category);
+    const changePercent =
+      previousCategory && previousCategory.total !== 0
+        ? (category.total - previousCategory.total) / previousCategory.total
+        : undefined;
+
+    return {
+      category: category.category,
+      type: category.type,
+      total: Number(category.total.toFixed(2)),
+      percentage: Number(category.percentage.toFixed(2)),
+      changePercent:
+        changePercent !== undefined
+          ? Number(changePercent.toFixed(4))
+          : undefined,
+    };
+  });
+
+  const notableFacts: string[] = [];
+  const gapToGoal = goal - current.savings;
+
+  if (goal > 0) {
+    if (gapToGoal > 0) {
+      notableFacts.push(
+        `Faltan ${gapToGoal.toFixed(0)} € para el objetivo de ahorro.`,
+      );
+    } else {
+      notableFacts.push(
+        `Superamos el objetivo de ahorro en ${Math.abs(gapToGoal).toFixed(
+          0,
+        )} €.`,
+      );
+    }
+  }
+
+  if (expenseChangePercent !== undefined) {
+    notableFacts.push(
+      `${expenseChangePercent >= 0 ? "Aumentaron" : "Reducimos"} los gastos un ${Math.abs(
+        expenseChangePercent * 100,
+      ).toFixed(1)} % frente al mes anterior.`,
+    );
+  }
+
+  const topExpense = categoryInsights.find((item) => item.type === "expense");
+  if (topExpense) {
+    notableFacts.push(
+      `Categoría con mayor peso: ${topExpense.category} (${topExpense.total.toFixed(
+        0,
+      )} €).`,
+    );
+  }
+
+  const biggestJump = categoryInsights
+    .filter(
+      (item) =>
+        item.type === "expense" &&
+        item.changePercent !== undefined &&
+        item.changePercent > 0,
+    )
+    .sort(
+      (a, b) =>
+        (b.changePercent ?? 0) - (a.changePercent ?? 0),
+    )[0];
+
+  if (biggestJump && biggestJump.changePercent) {
+    notableFacts.push(
+      `Mayor incremento: ${biggestJump.category} (+${(
+        biggestJump.changePercent * 100
+      ).toFixed(0)} % vs mes anterior).`,
+    );
+  }
+
+  return {
+    monthLabel: current.label,
+    goal,
+    savings: Number(current.savings.toFixed(2)),
+    gapToGoal: Number((goal - current.savings).toFixed(2)),
+    savingsProgress: goal !== 0 ? Number((current.savings / goal).toFixed(4)) : null,
+    income: Number(current.income.toFixed(2)),
+    expenses: Number(absoluteExpenses.toFixed(2)),
+    balance: Number(current.balance.toFixed(2)),
+    averageDailySpend: Number(current.averageDailySpend.toFixed(2)),
+    daysTracked: current.daysTracked,
+    deltas: {
+      incomeChangePercent:
+        incomeChangePercent !== undefined
+          ? Number(incomeChangePercent.toFixed(4))
+          : undefined,
+      expenseChangePercent:
+        expenseChangePercent !== undefined
+          ? Number(expenseChangePercent.toFixed(4))
+          : undefined,
+      balanceChangePercent:
+        balanceChangePercent !== undefined
+          ? Number(balanceChangePercent.toFixed(4))
+          : undefined,
+    },
+    previous: previous
+      ? {
+          income: Number(previous.income.toFixed(2)),
+          expenses: Number(Math.abs(previous.expenses).toFixed(2)),
+          balance: Number(previous.balance.toFixed(2)),
+          savings: Number(previous.balance.toFixed(2)),
+        }
+      : undefined,
+    categoryInsights,
+    notableFacts,
+    baseline: {
+      alerts: baselineAlerts,
+      recommendations: baselineRecommendations,
+    },
+  };
+}
+
+export async function createDashboardData(
   transactions: Transaction[],
   goal = 200,
-): DashboardData {
+): Promise<DashboardData> {
   if (!transactions.length) {
     return {
       goal,
@@ -236,7 +412,8 @@ export function createDashboardData(
   const alertsByMonth: Record<string, string[]> = {};
   const recommendationsByMonth: Record<string, string[]> = {};
 
-  history.forEach((summary, index) => {
+  for (let index = 0; index < history.length; index += 1) {
+    const summary = history[index];
     const monthTransactions = grouped.get(summary.monthKey) ?? [];
     const previousSummary = index > 0 ? history[index - 1] : undefined;
     const previousMonthTransactions = previousSummary
@@ -246,20 +423,43 @@ export function createDashboardData(
     const categories = buildCategorySummary(monthTransactions);
     const previousCategories = buildCategorySummary(previousMonthTransactions);
 
-    categoryBreakdownByMonth[summary.monthKey] = categories;
-    alertsByMonth[summary.monthKey] = buildAlerts(
+    const baselineAlerts = buildAlerts(
       summary,
       previousSummary,
       categories,
       previousCategories,
       goal,
     );
-    recommendationsByMonth[summary.monthKey] = buildRecommendations(
+    const baselineRecommendations = buildRecommendations(
       summary,
       categories,
       goal,
     );
-  });
+
+    const facts = buildInsightFacts(
+      summary,
+      previousSummary,
+      categories,
+      previousCategories,
+      baselineAlerts,
+      baselineRecommendations,
+      goal,
+    );
+
+    const aiMessages = await generateAIInsights(facts);
+
+    categoryBreakdownByMonth[summary.monthKey] = categories;
+    alertsByMonth[summary.monthKey] = mergeWithFallback(
+      aiMessages?.alerts,
+      baselineAlerts,
+      4,
+    );
+    recommendationsByMonth[summary.monthKey] = mergeWithFallback(
+      aiMessages?.recommendations,
+      baselineRecommendations,
+      3,
+    );
+  }
 
   const current = history.at(-1);
   const previous = history.length > 1 ? history.at(-2) : undefined;
