@@ -69,8 +69,8 @@ export function HistoryChart({ data }: HistoryChartProps) {
     const nextBalance = previousBalance + month.savings;
 
     acc.push({
-      name: capitalize(month.label),
-      income: month.income,
+    name: capitalize(month.label),
+    income: month.income,
       expenses: Math.abs(month.expenses),
       balance: nextBalance,
     });

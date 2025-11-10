@@ -199,7 +199,7 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
                             fontSize={18}
                             fontWeight={600}
                           >
-                            {currency.format(totalValue)}
+                        {currency.format(totalValue)}
                           </text>
                         </g>
                       );

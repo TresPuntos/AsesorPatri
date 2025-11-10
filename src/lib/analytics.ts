@@ -5,6 +5,7 @@ import type {
   DashboardData,
   MonthSummary,
   Transaction,
+  TransactionType,
 } from "./types";
 import { generateAIInsights, type InsightFacts } from "./insights";
 import { PRESET_CATEGORIES } from "./category-constants";
@@ -54,28 +55,46 @@ function aggregateMonth(transactions: Transaction[]): MonthSummary {
 }
 
 function buildCategorySummary(transactions: Transaction[]): CategorySummary[] {
-  const totalExpenses = transactions
-    .filter((tx) => tx.type === "expense")
-    .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-
-  const groups = new Map<string, { total: number; type: "income" | "expense" }>();
+  const groups = new Map<
+    string,
+    { expense: number; income: number }
+  >();
 
   transactions.forEach((tx) => {
-    const existing = groups.get(tx.category) ?? { total: 0, type: tx.type };
-    existing.total += tx.type === "expense" ? Math.abs(tx.amount) : tx.amount;
-    existing.type = tx.type;
-    groups.set(tx.category, existing);
+    const record = groups.get(tx.category) ?? { expense: 0, income: 0 };
+    if (tx.type === "expense") {
+      record.expense += Math.abs(tx.amount);
+    } else {
+      record.income += tx.amount;
+    }
+    groups.set(tx.category, record);
   });
 
-  return Array.from(groups.entries())
-    .map(([category, { total, type }]) => ({
-      category,
-      total,
-      type,
+  const entries = Array.from(groups.entries())
+    .map(([category, { expense, income }]) => {
+      const net = expense - income;
+      const type: TransactionType = net >= 0 ? "expense" : "income";
+      const total = Math.abs(net);
+
+      return {
+        category,
+        total,
+        type,
+      };
+    })
+    .filter((entry) => entry.total > 0);
+
+  const totalExpenses = entries
+    .filter((entry) => entry.type === "expense")
+    .reduce((sum, entry) => sum + entry.total, 0);
+
+  return entries
+    .map((entry) => ({
+      ...entry,
       percentage:
-        totalExpenses === 0 || type === "income"
-          ? 0
-          : (total / totalExpenses) * 100,
+        entry.type === "expense" && totalExpenses > 0
+          ? (entry.total / totalExpenses) * 100
+          : 0,
     }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 6);
@@ -444,16 +463,16 @@ export async function createDashboardData(
     categoryBreakdownByMonth[summary.monthKey] = categories;
     if (enableAIInsights) {
       const aiMessages = await generateAIInsights(facts);
-      alertsByMonth[summary.monthKey] = mergeWithFallback(
-        aiMessages?.alerts,
-        baselineAlerts,
-        4,
-      );
-      recommendationsByMonth[summary.monthKey] = mergeWithFallback(
-        aiMessages?.recommendations,
-        baselineRecommendations,
-        3,
-      );
+    alertsByMonth[summary.monthKey] = mergeWithFallback(
+      aiMessages?.alerts,
+      baselineAlerts,
+      4,
+    );
+    recommendationsByMonth[summary.monthKey] = mergeWithFallback(
+      aiMessages?.recommendations,
+      baselineRecommendations,
+      3,
+    );
     } else {
       alertsByMonth[summary.monthKey] = mergeWithFallback(
         null,

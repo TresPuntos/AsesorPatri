@@ -38,9 +38,11 @@ export function DashboardClient({ data }: DashboardClientProps) {
   const defaultMonthKey =
     data.currentMonth?.monthKey ?? data.history.at(-1)?.monthKey ?? "";
 
-  const [selectedMonthKey, setSelectedMonthKey] = useState(defaultMonthKey);
+  const [manualMonthKey, setManualMonthKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] =
     useState<"overview" | "transactions">("overview");
+
+  const selectedMonthKey = manualMonthKey ?? defaultMonthKey;
 
   const selectedSummary = useMemo(
     () => data.history.find((month) => month.monthKey === selectedMonthKey),
@@ -57,15 +59,15 @@ export function DashboardClient({ data }: DashboardClientProps) {
 
   const categories = useMemo(
     () =>
-      (selectedSummary &&
-        data.categoryBreakdownByMonth[selectedSummary.monthKey]) ??
+    (selectedSummary &&
+      data.categoryBreakdownByMonth[selectedSummary.monthKey]) ??
       [],
     [data.categoryBreakdownByMonth, selectedSummary],
   );
   const transactions = useMemo(
     () =>
-      (selectedSummary &&
-        data.transactionsByMonth[selectedSummary.monthKey]) ??
+    (selectedSummary &&
+      data.transactionsByMonth[selectedSummary.monthKey]) ??
       [],
     [data.transactionsByMonth, selectedSummary],
   );
@@ -142,7 +144,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
         <div className="pointer-events-none absolute -right-24 bottom-24 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.18),transparent_65%)] blur-3xl" />
       </div>
 
-      <DashboardHeader summary={selectedSummary} goal={data.goal} />
+          <DashboardHeader summary={selectedSummary} goal={data.goal} />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {statCards.map((card) => (
@@ -161,56 +163,56 @@ export function DashboardClient({ data }: DashboardClientProps) {
                 Comparando con {previousSummary.label}
               </span>
             ) : null}
-          </div>
-          <select
-            value={selectedMonthKey}
-            onChange={(event) => setSelectedMonthKey(event.target.value)}
+            </div>
+            <select
+              value={selectedMonthKey}
+              onChange={(event) => setManualMonthKey(event.target.value)}
             className="h-9 rounded-full border border-white/15 bg-slate-950/80 px-3 text-sm text-white shadow-inner shadow-black/30 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-          >
-            {[...data.history]
-              .map((month) => ({ value: month.monthKey, label: month.label }))
-              .reverse()
-              .map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-          </select>
-        </div>
+            >
+              {[...data.history]
+                .map((month) => ({ value: month.monthKey, label: month.label }))
+                .reverse()
+                .map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+            </select>
+          </div>
         <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-xs text-white/70 shadow-inner shadow-black/30">
-          <button
-            type="button"
-            onClick={() => setActiveTab("overview")}
+            <button
+              type="button"
+              onClick={() => setActiveTab("overview")}
             className={`rounded-full px-4 py-1.5 transition ${
-              activeTab === "overview"
+                activeTab === "overview"
                 ? "bg-cyan-500/25 text-white shadow-inner shadow-cyan-400/30"
-                : "hover:bg-white/10"
-            }`}
-          >
+                  : "hover:bg-white/10"
+              }`}
+            >
             Resumen general
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("transactions")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("transactions")}
             className={`rounded-full px-4 py-1.5 transition ${
-              activeTab === "transactions"
+                activeTab === "transactions"
                 ? "bg-cyan-500/25 text-white shadow-inner shadow-cyan-400/30"
-                : "hover:bg-white/10"
-            }`}
-          >
+                  : "hover:bg-white/10"
+              }`}
+            >
             Ver partidas
             {pendingTransactions > 0 ? (
               <span className="ml-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black">
                 {pendingTransactions}
               </span>
             ) : null}
-          </button>
+            </button>
         </div>
       </div>
 
       {activeTab === "overview" ? (
         <>
-          <HistoryChart data={data.history} />
+              <HistoryChart data={data.history} />
 
           <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="flex flex-col gap-6">
