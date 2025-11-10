@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 import type { MonthSummary } from "@/lib/types";
 import { ThemeToggle } from "../theme-toggle";
+import { UploadWidget } from "./upload-widget";
 
 const currency = new Intl.NumberFormat("es-ES", {
   style: "currency",
@@ -167,6 +168,9 @@ export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
               Te faltan {currency.format(remaining)} para alcanzar los {currency.format(goal)}.
             </p>
           </div>
+        </div>
+        <div className="hidden lg:block">
+          <UploadWidget />
         </div>
       </div>
     </motion.header>
