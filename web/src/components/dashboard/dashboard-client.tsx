@@ -235,6 +235,24 @@ export function DashboardClient({ data }: DashboardClientProps) {
                 goal={data.goal}
                 categories={categories}
               />
+              <section className="rounded-3xl border border-dashed border-cyan-500/20 bg-cyan-500/10 p-6 text-cyan-100 shadow-[0_24px_80px_-40px_rgba(6,182,212,0.55)] backdrop-blur">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="max-w-lg space-y-2">
+                    <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">
+                      Actualiza tus datos
+                    </p>
+                    <h3 className="text-2xl font-semibold text-cyan-50">
+                      Sube el extracto del último mes para refrescar tus métricas al instante.
+                    </h3>
+                    <p className="text-sm text-cyan-100/70">
+                      Arrastra un archivo .xlsx o .csv o usa el recuadro para elegirlo manualmente.
+                    </p>
+                  </div>
+                  <div className="w-full max-w-sm shrink-0">
+                    <UploadWidget formId="dashboard-upload-widget" showTitle={false} />
+                  </div>
+                </div>
+              </section>
             </div>
             <CategoryBreakdown categories={categories} />
           </section>
@@ -250,24 +268,6 @@ export function DashboardClient({ data }: DashboardClientProps) {
         />
       )}
 
-      <section className="rounded-3xl border border-dashed border-cyan-500/20 bg-cyan-500/5 p-6 shadow-[0_20px_60px_-32px_rgba(6,182,212,0.55)] backdrop-blur">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="max-w-xl space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">
-              Actualiza tus datos
-            </p>
-            <h3 className="text-2xl font-semibold text-cyan-50">
-              Sube el extracto del último mes para refrescar tus métricas al instante.
-            </h3>
-            <p className="text-sm text-cyan-100/70">
-              Arrastra un archivo .xlsx o .csv o haz clic en el botón para elegirlo manualmente.
-            </p>
-          </div>
-          <div className="w-full max-w-xs shrink-0">
-            <UploadWidget formId="dashboard-upload-widget" />
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

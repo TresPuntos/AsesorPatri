@@ -220,6 +220,27 @@ export function DashboardClient({ data }: DashboardClientProps) {
               {recommendations.length ? (
                 <RecommendationsCard recommendations={recommendations} />
               ) : null}
+              <section className="rounded-3xl border border-dashed border-cyan-500/30 bg-cyan-500/10 p-6 text-cyan-50 shadow-[0_24px_80px_-40px_rgba(6,182,212,0.55)] backdrop-blur">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="max-w-lg space-y-2">
+                    <p className="text-xs uppercase tracking-[0.3em] text-cyan-100/70">
+                      Actualiza tus datos
+                    </p>
+                    <h3 className="text-2xl font-semibold text-cyan-50">
+                      Sube el extracto del último mes para refrescar tus métricas al instante.
+                    </h3>
+                    <p className="text-sm text-cyan-100/80">
+                      Arrastra un archivo .xlsx o .csv o usa el recuadro para elegirlo manualmente.
+                    </p>
+                  </div>
+                  <div className="w-full max-w-sm shrink-0">
+                    <UploadWidget
+                      showTitle={false}
+                      hint="Tu dashboard se actualizará en segundos con las alertas y categorías nuevas."
+                    />
+                  </div>
+                </div>
+              </section>
             </div>
             <CategoryBreakdown categories={categories} />
           </section>
@@ -232,24 +253,6 @@ export function DashboardClient({ data }: DashboardClientProps) {
         />
       )}
 
-      <section className="rounded-3xl border border-dashed border-cyan-500/30 bg-cyan-500/10 p-6 text-cyan-50 shadow-[0_24px_80px_-40px_rgba(6,182,212,0.55)] backdrop-blur">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="max-w-xl space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-100/70">
-              Actualiza tus datos
-            </p>
-            <h3 className="text-2xl font-semibold text-cyan-50">
-              Sube el extracto del último mes para refrescar tus métricas al instante.
-            </h3>
-            <p className="text-sm text-cyan-100/80">
-              Arrastra un archivo .xlsx o .csv o haz clic en el recuadro para elegirlo manualmente.
-            </p>
-          </div>
-          <div className="w-full max-w-sm shrink-0">
-            <UploadWidget showTitle={false} hint="Tu dashboard se actualizará en segundos con las alertas y categorías nuevas." />
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

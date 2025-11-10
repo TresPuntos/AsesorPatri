@@ -11,9 +11,10 @@ interface UploadState {
 
 interface UploadWidgetProps {
   formId?: string;
+  showTitle?: boolean;
 }
 
-export function UploadWidget({ formId }: UploadWidgetProps) {
+export function UploadWidget({ formId, showTitle = true }: UploadWidgetProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -50,10 +51,12 @@ export function UploadWidget({ formId }: UploadWidgetProps) {
         });
       }}
     >
-      <div className="flex items-center gap-3 text-sm uppercase tracking-[0.2em] text-cyan-200">
-        <CloudUpload className="size-5" />
-        Actualiza tus datos
-      </div>
+      {showTitle ? (
+        <div className="flex items-center gap-3 text-sm uppercase tracking-[0.2em] text-cyan-200">
+          <CloudUpload className="size-5" />
+          Actualiza tus datos
+        </div>
+      ) : null}
       <label className="flex flex-col gap-3 rounded-2xl border border-cyan-400/10 bg-black/20 p-4 text-sm text-cyan-50/80 cursor-pointer">
         <span>
           Arrastra tu extracto mensual (.xlsx o .csv) o haz clic para elegir un
