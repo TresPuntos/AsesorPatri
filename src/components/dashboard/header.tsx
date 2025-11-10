@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 import type { MonthSummary } from "@/lib/types";
 import { ThemeToggle } from "../theme-toggle";
-import { UploadWidget } from "./upload-widget";
 
 const currency = new Intl.NumberFormat("es-ES", {
   style: "currency",
@@ -234,7 +233,15 @@ export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
                 </p>
               </div>
             </div>
-            <UploadWidget variant="compact" hint="Sube tu extracto para refrescar métricas y alertas al instante." />
+            <div className="space-y-2 rounded-2xl border border-white/10 bg-black/30 p-4 text-xs text-white/60">
+              <p className="uppercase tracking-[0.28em] text-white/40">
+                Próximo paso sugerido
+              </p>
+              <p className="text-sm text-white/70">
+                Baja hasta el final de la página para subir tu extracto y recalcular métricas
+                con los últimos movimientos.
+              </p>
+            </div>
           </div>
         </div>
       </div>
