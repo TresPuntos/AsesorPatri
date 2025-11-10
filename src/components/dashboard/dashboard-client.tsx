@@ -42,7 +42,8 @@ export function DashboardClient({ data }: DashboardClientProps) {
     data.currentMonth?.monthKey ?? data.history.at(-1)?.monthKey ?? "";
 
   const [selectedMonthKey, setSelectedMonthKey] = useState(defaultMonthKey);
-  const [activeTab, setActiveTab] = useState<"overview" | "transactions">("overview");
+  const [activeTab, setActiveTab] =
+    useState<"overview" | "transactions">("overview");
 
   const selectedSummary = useMemo(
     () => data.history.find((month) => month.monthKey === selectedMonthKey),
@@ -57,14 +58,24 @@ export function DashboardClient({ data }: DashboardClientProps) {
     [data.history, selectedSummary],
   );
 
-  const categories =
-    (selectedSummary &&
-      data.categoryBreakdownByMonth[selectedSummary.monthKey]) ??
-    [];
-  const transactions =
-    (selectedSummary &&
-      data.transactionsByMonth[selectedSummary.monthKey]) ??
-    [];
+  const categories = useMemo(
+    () =>
+      (selectedSummary &&
+        data.categoryBreakdownByMonth[selectedSummary.monthKey]) ??
+      [],
+    [data.categoryBreakdownByMonth, selectedSummary],
+  );
+  const transactions = useMemo(
+    () =>
+      (selectedSummary &&
+        data.transactionsByMonth[selectedSummary.monthKey]) ??
+      [],
+    [data.transactionsByMonth, selectedSummary],
+  );
+  const pendingTransactions = useMemo(
+    () => transactions.filter((tx) => tx.pendingCategory).length,
+    [transactions],
+  );
   const alerts =
     (selectedSummary && data.alertsByMonth[selectedSummary.monthKey]) ?? [];
   const recommendations =
@@ -134,78 +145,86 @@ export function DashboardClient({ data }: DashboardClientProps) {
         <div className="pointer-events-none absolute -right-24 bottom-24 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.18),transparent_65%)] blur-3xl" />
       </div>
 
-      <div className="flex flex-col gap-4">
+<<<<<<< HEAD
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)]">
         <DashboardHeader summary={selectedSummary} goal={data.goal} />
-        <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl shadow-black/20 backdrop-blur-sm md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-white/60 shadow-inner shadow-black/20">
+        <div className="grid gap-3">
+          {statCards.map((card) => (
+            <StatCard key={card.label} {...card} />
+          ))}
+        </div>
+      </section>
+
+      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl shadow-black/20 backdrop-blur-sm md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col">
+            <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-white/60">
               Mes en análisis
             </span>
-            <select
-              value={selectedMonthKey}
-              onChange={(event) => setSelectedMonthKey(event.target.value)}
-              className="h-9 rounded-full border border-white/15 bg-slate-950/80 px-3 text-sm text-white shadow-inner shadow-black/30 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-            >
-              {[...data.history]
-                .map((month) => ({ value: month.monthKey, label: month.label }))
-                .reverse()
-                .map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-            </select>
-            <div className="inline-flex items-center">
-              <ThemeToggle />
-            </div>
+            {previousSummary ? (
+              <span className="text-[11px] text-white/40">
+                Comparando con {previousSummary.label}
+              </span>
+            ) : null}
           </div>
-          <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-xs text-white/70 shadow-inner shadow-black/30">
-            <button
-              type="button"
-              onClick={() => setActiveTab("overview")}
-              className={`rounded-full px-4 py-1.5 transition ${
-                activeTab === "overview"
-                  ? "bg-cyan-500/25 text-white shadow-inner shadow-cyan-400/30"
-                  : "hover:bg-white/10"
-              }`}
-            >
-              Resumen
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("transactions")}
-              className={`rounded-full px-4 py-1.5 transition ${
-                activeTab === "transactions"
-                  ? "bg-cyan-500/25 text-white shadow-inner shadow-cyan-400/30"
-                  : "hover:bg-white/10"
-              }`}
-            >
-              Partidas
-            </button>
+          <select
+            value={selectedMonthKey}
+            onChange={(event) => setSelectedMonthKey(event.target.value)}
+            className="h-9 rounded-full border border-white/15 bg-slate-950/80 px-3 text-sm text-white shadow-inner shadow-black/30 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+          >
+            {[...data.history]
+              .map((month) => ({ value: month.monthKey, label: month.label }))
+              .reverse()
+              .map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+          </select>
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/10 p-1 shadow-inner shadow-black/20">
+            <ThemeToggle />
           </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-xs text-white/70 shadow-inner shadow-black/30">
+          <button
+            type="button"
+            onClick={() => setActiveTab("overview")}
+            className={`rounded-full px-4 py-1.5 transition ${
+              activeTab === "overview"
+                ? "bg-cyan-500/25 text-white shadow-inner shadow-cyan-400/30"
+                : "hover:bg-white/10"
+            }`}
+          >
+            Resumen general
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("transactions")}
+            className={`rounded-full px-4 py-1.5 transition ${
+              activeTab === "transactions"
+                ? "bg-cyan-500/25 text-white shadow-inner shadow-cyan-400/30"
+                : "hover:bg-white/10"
+            }`}
+          >
+            Ver partidas
+            {pendingTransactions > 0 ? (
+              <span className="ml-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black">
+                {pendingTransactions}
+              </span>
+            ) : null}
+          </button>
         </div>
       </div>
 
       {activeTab === "overview" ? (
         <>
-          <section className="grid gap-6 lg:grid-cols-5">
-            <div className="lg:col-span-3">
-              <ProgressCard goal={data.goal} current={selectedSummary.savings} />
-            </div>
-            <div className="lg:col-span-2">
+          <section className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="flex flex-col gap-6">
+              <ProgressCard
+                goal={data.goal}
+                current={selectedSummary.savings}
+              />
               <UploadWidget />
-            </div>
-          </section>
-
-          <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {statCards.map((card) => (
-              <StatCard key={card.label} {...card} />
-            ))}
-          </section>
-
-          <section className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <HistoryChart data={data.history} />
             </div>
             <div className="flex flex-col gap-6">
               <AlertsCard alerts={alerts} />
@@ -214,6 +233,22 @@ export function DashboardClient({ data }: DashboardClientProps) {
           </section>
 
           <CategoryBreakdown categories={categories} />
+
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <HistoryChart data={data.history} />
+            </div>
+            <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-black/25 p-6 text-sm text-white/70 shadow-2xl shadow-black/40">
+              <h3 className="text-lg font-semibold text-white">
+                Evolución en contexto
+              </h3>
+              <p>
+                Consulta la tendencia del balance y detecta meses atípicos para
+                revisar partidas concretas. Usa el selector superior para saltar
+                rápidamente a cualquier mes y ver sus detalles.
+              </p>
+            </div>
+          </section>
         </>
       ) : (
         <TransactionsTable
