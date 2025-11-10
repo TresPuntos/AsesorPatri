@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { CheckCircle2, Sparkles } from "lucide-react";
 import type { MonthSummary } from "@/lib/types";
 import { ThemeToggle } from "../theme-toggle";
 
@@ -74,14 +74,46 @@ const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
 export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
   const messaging = summary ? buildMessaging(summary, goal) : null;
   const tasks = [
-    "Guardar primero 50 € nada más cobrar y dejarlos fuera de la vista en tu cuenta cripto.",
-    "Revisar suscripciones en Ocio y cancelar lo que no estés usando.",
-    "Practicar un día low-cost: comida casera + plan gratis.",
+    {
+      id: 0,
+      idea:
+        "Guardar primero 50 € nada más cobrar y dejarlos fuera de la vista en tu cuenta cripto.",
+      success: "¡Listo! 50 € fuera de tentaciones. Déjalos crecer tranquilos.",
+    },
+    {
+      id: 1,
+      idea:
+        "Revisar suscripciones en Ocio y cancelar lo que no estés usando. Dos ajustes pequeños bastan.",
+      success: "¡Suscripciones afinadas! Ese ahorro se queda contigo.",
+    },
+    {
+      id: 2,
+      idea:
+        "Practicar un día low-cost: comida casera + plan gratis. Aliviarás Supermercado y Ocio.",
+      success: "¡Día low-cost desbloqueado! Disfruta sin gastar de más.",
+    },
   ];
   const [completed, setCompleted] = useState<Record<number, boolean>>({});
+  const [celebrating, setCelebrating] = useState<Record<number, boolean>>({});
 
-  const toggleTask = (index: number) => {
-    setCompleted((prev) => ({ ...prev, [index]: !prev[index] }));
+  const toggleTask = (taskId: number) => {
+    setCompleted((prev) => {
+      const nextCompleted = !prev[taskId];
+      const updated = { ...prev, [taskId]: nextCompleted };
+      if (nextCompleted) {
+        setCelebrating((prevCelebrating) => ({
+          ...prevCelebrating,
+          [taskId]: true,
+        }));
+        window.setTimeout(() => {
+          setCelebrating((prevCelebrating) => ({
+            ...prevCelebrating,
+            [taskId]: false,
+          }));
+        }, 900);
+      }
+      return updated;
+    });
   };
 
   const { percentage, remaining, currentSavings, normalizedProgress } = useMemo(
@@ -146,31 +178,70 @@ export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
             : "Sube tu extracto para ver cómo va tu plan de ahorro y recibir consejos al instante."}
         </p>
             </div>
-            <div className="mt-2 flex flex-col gap-2">
-              {tasks.map((task, index) => {
-                const isDone = Boolean(completed[index]);
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {tasks.map(({ id, idea, success }) => {
+                const isDone = Boolean(completed[id]);
+                const isCelebrating = Boolean(celebrating[id]);
                 return (
-                  <button
-                    key={task}
+                  <motion.button
+                    key={id}
                     type="button"
-                    onClick={() => toggleTask(index)}
-                    className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                      isDone
-                        ? "border-emerald-400/60 bg-emerald-500/20 text-emerald-50"
-                        : "border-white/10 bg-white/5 text-white/80 hover:border-cyan-300/60 hover:bg-black/40"
-                    }`}
+                    onClick={() => toggleTask(id)}
+                    whileTap={{ scale: 0.98 }}
+                    animate={{
+                      backgroundColor: isDone
+                        ? "rgba(16,185,129,0.18)"
+                        : "rgba(15,23,42,0.55)",
+                      borderColor: isDone ? "rgba(16,185,129,0.55)" : "rgba(255,255,255,0.1)",
+                      color: isDone ? "rgba(240,253,244,1)" : "rgba(226,232,240,0.85)",
+                    }}
+                    className="group flex h-full flex-col gap-3 rounded-2xl border px-4 py-3 text-left text-sm shadow-inner shadow-black/20 transition hover:border-cyan-300/60 hover:bg-black/40"
                   >
-                    <span
-                      className={`mt-0.5 inline-flex size-5 items-center justify-center rounded-full border text-xs font-semibold transition ${
-                        isDone
-                          ? "border-emerald-400 bg-emerald-300 text-slate-950"
-                          : "border-cyan-400/70 bg-cyan-500/20 text-cyan-200"
-                      }`}
-                    >
-                      {isDone ? <CheckCircle2 className="size-4" /> : "✓"}
-                    </span>
-                    <span className="flex-1 leading-relaxed">{task}</span>
-                  </button>
+                    <div className="flex items-start gap-3">
+                      <motion.span
+                        layout
+                        animate={{
+                          scale: isCelebrating ? 1.2 : 1,
+                        }}
+                        transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                        className={`mt-0.5 inline-flex size-6 items-center justify-center rounded-full border text-xs font-semibold transition ${
+                          isDone
+                            ? "border-emerald-300 bg-emerald-200 text-slate-950"
+                            : "border-cyan-400/70 bg-cyan-500/20 text-cyan-100"
+                        }`}
+                      >
+                        {isDone ? <CheckCircle2 className="size-4" /> : "✓"}
+                      </motion.span>
+                      <div className="flex-1">
+                        <AnimatePresence mode="wait">
+                          <motion.p
+                            key={isDone ? "done" : "idea"}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.2 }}
+                            className="leading-relaxed"
+                          >
+                            {isDone ? success : idea}
+                          </motion.p>
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                    <AnimatePresence>
+                      {isCelebrating ? (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.3 }}
+                          className="inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-400/10 px-3 py-1 text-xs uppercase tracking-[0.28em] text-emerald-100"
+                        >
+                          <Sparkles className="size-3" />
+                          ¡Muy bien!
+                        </motion.div>
+                      ) : null}
+                    </AnimatePresence>
+                  </motion.button>
                 );
               })}
               <p className="text-xs uppercase tracking-[0.3em] text-white/40">
