@@ -145,25 +145,6 @@ export function DashboardClient({ data }: DashboardClientProps) {
       <DashboardHeader summary={selectedSummary} goal={data.goal} />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {[
-          "Guardar primero 50 € al cobrar y apartarlos en tu cuenta cripto.",
-          "Revisar suscripciones en Ocio y cancelar las que no estés usando.",
-          "Practicar un día low-cost: comida casera + plan gratis.",
-        ].map((task) => (
-          <button
-            key={task}
-            type="button"
-            className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-white/80 shadow-inner shadow-black/30 transition hover:border-cyan-400/60 hover:bg-black/40"
-          >
-            <span className="inline-flex size-5 items-center justify-center rounded-full border border-cyan-400/80 bg-cyan-500/20 text-xs font-semibold text-cyan-200 transition group-hover:bg-cyan-400 group-hover:text-slate-900">
-              ✓
-            </span>
-            <span className="flex-1">{task}</span>
-          </button>
-        ))}
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {statCards.map((card) => (
           <StatCard key={card.label} {...card} />
         ))}
