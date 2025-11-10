@@ -153,9 +153,9 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
         </p>
       </header>
 
-      <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:items-center">
+      <div className="mt-8 flex flex-col gap-6">
         <div className="rounded-3xl border border-white/5 bg-white/5 p-8 backdrop-blur">
-          <div className="h-[22rem] w-full">
+          <div className="mx-auto h-64 w-full max-w-[260px] sm:h-72 sm:max-w-sm lg:h-[22rem] lg:max-w-[360px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -163,8 +163,8 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
                     ...item,
                     share: shareMap.get(item.name) ?? 0,
                   }))}
-                  innerRadius="60%"
-                  outerRadius="92%"
+                  innerRadius="58%"
+                  outerRadius="88%"
                   paddingAngle={4}
                   dataKey="value"
                   nameKey="name"
