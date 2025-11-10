@@ -16,31 +16,44 @@ interface CategoryBreakdownProps {
 }
 
 const palette: Record<string, string> = {
-  ingresos: "from-emerald-400/80 via-emerald-500/40 to-emerald-900/50",
-  alimentacion: "from-orange-400/80 via-orange-500/40 to-orange-900/40",
-  hogar: "from-sky-400/80 via-sky-500/40 to-sky-900/50",
-  transporte: "from-purple-400/80 via-purple-500/40 to-purple-900/50",
-  ocio: "from-pink-400/80 via-pink-500/40 to-pink-900/50",
-  salud: "from-teal-400/80 via-teal-500/40 to-teal-900/50",
-  educacion: "from-cyan-400/80 via-cyan-500/40 to-cyan-900/50",
-  tecnologia: "from-indigo-400/80 via-indigo-500/40 to-indigo-900/50",
-  viajes: "from-rose-400/80 via-rose-500/40 to-rose-900/50",
-  transferencias: "from-amber-400/80 via-amber-500/40 to-amber-900/50",
+  transferenciasyefectivo:
+    "from-amber-400/80 via-amber-500/40 to-amber-900/50",
+  viviendayprestamos: "from-sky-400/80 via-sky-500/40 to-sky-900/50",
+  ocioyentretenimiento:
+    "from-pink-400/80 via-pink-500/40 to-pink-900/50",
+  supermercado: "from-orange-400/80 via-orange-500/40 to-orange-900/40",
+  saludycuidado: "from-teal-400/80 via-teal-500/40 to-teal-900/50",
+  suministros: "from-indigo-400/80 via-indigo-500/40 to-indigo-900/50",
+  moto: "from-purple-400/80 via-purple-500/40 to-purple-900/50",
+  ahorro: "from-emerald-400/80 via-emerald-500/40 to-emerald-900/50",
+  impuestos: "from-rose-400/80 via-rose-500/40 to-rose-900/50",
+  bbva: "from-blue-400/80 via-blue-500/40 to-blue-900/50",
+  viajes: "from-cyan-400/80 via-cyan-500/40 to-cyan-900/50",
+  educacion: "from-lime-400/80 via-lime-500/40 to-lime-900/50",
+  otrosgastosgenerales:
+    "from-slate-400/80 via-slate-500/40 to-slate-900/50",
+  otrosingresos: "from-emerald-400/80 via-emerald-500/40 to-emerald-900/50",
+  mascotas: "from-fuchsia-400/80 via-fuchsia-500/40 to-fuchsia-900/50",
   otros: "from-slate-400/80 via-slate-500/40 to-slate-900/50",
 };
 
 const chartColors: Record<string, string> = {
-  ingresos: "#34d399",
-  alimentacion: "#fb923c",
-  hogar: "#38bdf8",
-  transporte: "#a855f7",
-  ocio: "#f472b6",
-  salud: "#14b8a6",
-  educacion: "#22d3ee",
-  tecnologia: "#6366f1",
-  viajes: "#f9739d",
-  transferencias: "#facc15",
-  otros: "#94a3b8",
+  transferenciasyefectivo: "#facc15",
+  viviendayprestamos: "#38bdf8",
+  ocioyentretenimiento: "#f472b6",
+  supermercado: "#fb923c",
+  saludycuidado: "#14b8a6",
+  suministros: "#6366f1",
+  moto: "#a855f7",
+  ahorro: "#22c55e",
+  impuestos: "#f9739d",
+  bbva: "#60a5fa",
+  viajes: "#22d3ee",
+  educacion: "#84cc16",
+  otrosgastosgenerales: "#94a3b8",
+  otrosingresos: "#34d399",
+  mascotas: "#c084fc",
+  otros: "#64748b",
 };
 
 const currency = new Intl.NumberFormat("es-ES", {
@@ -49,7 +62,19 @@ const currency = new Intl.NumberFormat("es-ES", {
   maximumFractionDigits: 0,
 });
 
-const CustomTooltip = ({ active, payload }: any) => {
+interface TooltipContentProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      name: string;
+      value: number;
+      type: "income" | "expense";
+      share: number;
+    };
+  }>;
+}
+
+const CustomTooltip = ({ active, payload }: TooltipContentProps) => {
   if (!active || !payload?.length) return null;
   const { name, value, type, share } = payload[0].payload;
 
@@ -65,6 +90,14 @@ const CustomTooltip = ({ active, payload }: any) => {
   );
 };
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
 export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
   if (!categories.length) {
     return null;
@@ -76,11 +109,14 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
         ? Math.abs(category.total)
         : category.total;
 
+    const slug = slugify(category.category);
+
     return {
       name: category.category,
       value,
       type: category.type,
-      color: chartColors[category.category] ?? chartColors.otros,
+      color: chartColors[slug] ?? chartColors.otros,
+      slug,
     };
   });
 
@@ -137,14 +173,38 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
                   {chartData.map((item) => (
                     <Cell key={item.name} fill={item.color} />
                   ))}
-                  <Label position="center">
-                    <div className="text-center text-xs uppercase tracking-[0.3em] text-white/60">
-                      Total mes
-                      <span className="mt-2 block text-lg font-semibold tracking-normal text-white">
-                        {currency.format(totalValue)}
-                      </span>
-                    </div>
-                  </Label>
+                  <Label
+                    position="center"
+                    content={({ cx, cy }) => {
+                      if (typeof cx !== "number" || typeof cy !== "number") {
+                        return null;
+                      }
+                      return (
+                        <g>
+                          <text
+                            x={cx}
+                            y={cy - 6}
+                            textAnchor="middle"
+                            fill="rgba(255,255,255,0.65)"
+                            fontSize={12}
+                            letterSpacing={3}
+                          >
+                            TOTAL MES
+                          </text>
+                          <text
+                            x={cx}
+                            y={cy + 16}
+                            textAnchor="middle"
+                            fill="#ffffff"
+                            fontSize={18}
+                            fontWeight={600}
+                          >
+                            {currency.format(totalValue)}
+                          </text>
+                        </g>
+                      );
+                    }}
+                  />
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
               </PieChart>
@@ -153,7 +213,7 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
         </div>
 
         <ul className="space-y-4">
-          {categories.map((category) => {
+          {categories.map((category, index) => {
             const value =
               category.type === "expense"
                 ? Math.abs(category.total)
@@ -169,7 +229,9 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
                 className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 p-4 backdrop-blur"
               >
                 <div
-                  className={`pointer-events-none absolute inset-0 opacity-70 blur-3xl bg-gradient-to-r ${palette[category.category] ?? palette.otros}`}
+                  className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${
+                    palette[chartData[index]?.slug ?? "otros"] ?? palette.otros
+                  } opacity-80 blur-3xl`}
                   style={{ width: `${Math.max(progress, 15)}%` }}
                 />
                 <div className="relative flex flex-col gap-2">

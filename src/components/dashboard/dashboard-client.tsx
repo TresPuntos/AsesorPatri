@@ -134,22 +134,17 @@ export function DashboardClient({ data }: DashboardClientProps) {
         <div className="pointer-events-none absolute -right-24 bottom-24 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.18),transparent_65%)] blur-3xl" />
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
-            Patri • bienestar financiero
-          </span>
-          <DashboardHeader summary={selectedSummary} goal={data.goal} />
-        </div>
-        <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs text-white/70 shadow-lg backdrop-blur">
+      <div className="flex flex-col gap-4">
+        <DashboardHeader summary={selectedSummary} goal={data.goal} />
+        <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl shadow-black/20 backdrop-blur-sm md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-white/60 shadow-inner shadow-black/20">
               Mes en análisis
-            </div>
+            </span>
             <select
               value={selectedMonthKey}
               onChange={(event) => setSelectedMonthKey(event.target.value)}
-              className="rounded-full border border-white/10 bg-black/40 px-4 py-2 text-sm text-white shadow-lg shadow-black/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 dark:bg-slate-900/70"
+              className="h-9 rounded-full border border-white/15 bg-slate-950/80 px-3 text-sm text-white shadow-inner shadow-black/30 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
             >
               {[...data.history]
                 .map((month) => ({ value: month.monthKey, label: month.label }))
@@ -160,15 +155,17 @@ export function DashboardClient({ data }: DashboardClientProps) {
                   </option>
                 ))}
             </select>
-            <ThemeToggle />
+            <div className="inline-flex items-center">
+              <ThemeToggle />
+            </div>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 p-1 text-sm text-white/70 shadow-lg shadow-black/20">
+          <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-xs text-white/70 shadow-inner shadow-black/30">
             <button
               type="button"
               onClick={() => setActiveTab("overview")}
-              className={`rounded-full px-4 py-2 transition ${
+              className={`rounded-full px-4 py-1.5 transition ${
                 activeTab === "overview"
-                  ? "bg-cyan-500/20 text-white shadow-inner shadow-cyan-400/30"
+                  ? "bg-cyan-500/25 text-white shadow-inner shadow-cyan-400/30"
                   : "hover:bg-white/10"
               }`}
             >
@@ -177,9 +174,9 @@ export function DashboardClient({ data }: DashboardClientProps) {
             <button
               type="button"
               onClick={() => setActiveTab("transactions")}
-              className={`rounded-full px-4 py-2 transition ${
+              className={`rounded-full px-4 py-1.5 transition ${
                 activeTab === "transactions"
-                  ? "bg-cyan-500/20 text-white shadow-inner shadow-cyan-400/30"
+                  ? "bg-cyan-500/25 text-white shadow-inner shadow-cyan-400/30"
                   : "hover:bg-white/10"
               }`}
             >
