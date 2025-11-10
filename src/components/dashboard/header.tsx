@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { CheckCircle2 } from "lucide-react";
 import type { MonthSummary } from "@/lib/types";
 import { ThemeToggle } from "../theme-toggle";
 import { UploadWidget } from "./upload-widget";
@@ -73,6 +74,16 @@ const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
 
 export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
   const messaging = summary ? buildMessaging(summary, goal) : null;
+  const tasks = [
+    "Guardar primero 50 € nada más cobrar y dejarlos fuera de la vista en tu cuenta cripto.",
+    "Revisar suscripciones en Ocio y cancelar lo que no estés usando.",
+    "Practicar un día low-cost: comida casera + plan gratis.",
+  ];
+  const [completed, setCompleted] = useState<Record<number, boolean>>({});
+
+  const toggleTask = (index: number) => {
+    setCompleted((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
 
   const { percentage, remaining, currentSavings, normalizedProgress } = useMemo(
     () => {
@@ -122,18 +133,49 @@ export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
           <div className="flex flex-col gap-4 lg:flex-1">
             <div className="flex items-center justify-between gap-4">
               <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.32em] text-white/60 shadow-inner shadow-cyan-400/10">
-                Dashboard financiero mensual
-              </span>
+          Dashboard financiero mensual
+        </span>
               <ThemeToggle />
             </div>
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                {messaging ? messaging.title : "Organiza tus finanzas, Patri 🌟"}
-              </h1>
-              <p className="max-w-xl text-sm text-white/70">
-                {messaging
-                  ? messaging.body
-                  : "Sube tu extracto para ver cómo va tu plan de ahorro y recibir consejos al instante."}
+          {messaging ? messaging.title : "Organiza tus finanzas, Patri 🌟"}
+        </h1>
+        <p className="max-w-xl text-sm text-white/70">
+          {messaging
+            ? messaging.body
+            : "Sube tu extracto para ver cómo va tu plan de ahorro y recibir consejos al instante."}
+        </p>
+            </div>
+            <div className="mt-2 flex flex-col gap-2">
+              {tasks.map((task, index) => {
+                const isDone = Boolean(completed[index]);
+                return (
+                  <button
+                    key={task}
+                    type="button"
+                    onClick={() => toggleTask(index)}
+                    className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${
+                      isDone
+                        ? "border-emerald-400/60 bg-emerald-500/20 text-emerald-50"
+                        : "border-white/10 bg-white/5 text-white/80 hover:border-cyan-300/60 hover:bg-black/40"
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 inline-flex size-5 items-center justify-center rounded-full border text-xs font-semibold transition ${
+                        isDone
+                          ? "border-emerald-400 bg-emerald-300 text-slate-950"
+                          : "border-cyan-400/70 bg-cyan-500/20 text-cyan-200"
+                      }`}
+                    >
+                      {isDone ? <CheckCircle2 className="size-4" /> : "✓"}
+                    </span>
+                    <span className="flex-1 leading-relaxed">{task}</span>
+                  </button>
+                );
+              })}
+              <p className="text-xs uppercase tracking-[0.3em] text-white/40">
+                Estoy aquí para animarte, no para regañarte ✨
               </p>
             </div>
           </div>
@@ -192,7 +234,7 @@ export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
                 </p>
               </div>
             </div>
-            <UploadWidget variant="compact" />
+            <UploadWidget variant="compact" hint="Sube tu extracto para refrescar métricas y alertas al instante." />
           </div>
         </div>
       </div>

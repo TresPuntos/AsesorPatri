@@ -11,9 +11,10 @@ interface UploadState {
 
 interface UploadWidgetProps {
   variant?: "default" | "compact";
+  hint?: string;
 }
 
-export function UploadWidget({ variant = "default" }: UploadWidgetProps) {
+export function UploadWidget({ variant = "default", hint }: UploadWidgetProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -106,6 +107,15 @@ export function UploadWidget({ variant = "default" }: UploadWidgetProps) {
           } ${state.status === "success" ? "text-emerald-200" : "text-rose-200"}`}
         >
           {state.message}
+        </p>
+      ) : null}
+      {hint ? (
+        <p
+          className={`${
+            variant === "compact" ? "text-xs" : "text-sm"
+          } text-white/50`}
+        >
+          {hint}
         </p>
       ) : null}
     </form>
