@@ -146,7 +146,11 @@ export function DashboardClient({ data }: DashboardClientProps) {
       </div>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)]">
-        <DashboardHeader summary={selectedSummary} goal={data.goal} />
+        <DashboardHeader
+          summary={selectedSummary}
+          goal={data.goal}
+          history={data.history}
+        />
         <div className="grid gap-3">
           {statCards.map((card) => (
             <StatCard key={card.label} {...card} />

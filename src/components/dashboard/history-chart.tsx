@@ -24,16 +24,28 @@ const currency = new Intl.NumberFormat("es-ES", {
   maximumFractionDigits: 0,
 });
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface ChartTooltipProps {
+  active?: boolean;
+  label?: string;
+  payload?: Array<{
+    dataKey?: string;
+    value?: number;
+  }>;
+}
+
+const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (!active || !payload?.length) return null;
 
-  const income = payload.find((item: any) => item.dataKey === "income")?.value ?? 0;
-  const expenses = payload.find((item: any) => item.dataKey === "expenses")?.value ?? 0;
-  const balance = payload.find((item: any) => item.dataKey === "balance")?.value ?? 0;
+  const income =
+    payload.find((item) => item.dataKey === "income")?.value ?? 0;
+  const expenses =
+    payload.find((item) => item.dataKey === "expenses")?.value ?? 0;
+  const balance =
+    payload.find((item) => item.dataKey === "balance")?.value ?? 0;
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/80 px-4 py-3 text-sm text-white shadow-xl backdrop-blur">
-      <p className="font-semibold">{label}</p>
+      <p className="font-semibold">{label ?? ""}</p>
       <p className="text-cyan-200">Ingresos: {currency.format(income)}</p>
       <p className="text-rose-300">
         Gastos: {currency.format(Math.abs(expenses))}
@@ -50,12 +62,21 @@ function capitalize(label: string) {
 }
 
 export function HistoryChart({ data }: HistoryChartProps) {
-  const chartData = data.map((month) => ({
-    name: capitalize(month.label),
-    income: month.income,
-    expenses: month.expenses,
-    balance: month.balance,
-  }));
+  const chartData = data.reduce<
+    Array<{ name: string; income: number; expenses: number; balance: number }>
+  >((acc, month, index) => {
+    const previousBalance = index === 0 ? 0 : acc[index - 1].balance;
+    const nextBalance = previousBalance + month.savings;
+
+    acc.push({
+      name: capitalize(month.label),
+      income: month.income,
+      expenses: Math.abs(month.expenses),
+      balance: nextBalance,
+    });
+
+    return acc;
+  }, []);
 
   return (
     <div className="rounded-3xl border border-white/5 bg-gradient-to-br from-slate-950/90 via-slate-900/70 to-black p-6 text-white shadow-xl shadow-black/30">
