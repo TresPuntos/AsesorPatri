@@ -117,7 +117,7 @@ function HeroTrendChart({ data }: { data: HeroChartPoint[] }) {
   if (!data.length) return null;
 
   return (
-    <div className="h-48 w-full rounded-2xl border border-white/10 bg-black/30 p-3 shadow-inner shadow-black/30">
+    <div className="h-60 w-full rounded-2xl border border-white/10 bg-black/30 p-3 shadow-inner shadow-black/30">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 6, right: 12, bottom: 0, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
