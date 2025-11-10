@@ -12,6 +12,7 @@ import { RecommendationsCard } from "./recommendations-card";
 import { CategoryBreakdown } from "./category-breakdown";
 import { TransactionsTable } from "./transactions-table";
 import { ThemeToggle } from "../theme-toggle";
+import { ExpenseAdvisorCard } from "./expense-advisor-card";
 
 const currency = new Intl.NumberFormat("es-ES", {
   style: "currency",
@@ -56,6 +57,16 @@ export function DashboardClient({ data }: DashboardClientProps) {
         : undefined,
     [data.history, selectedSummary],
   );
+
+  const yearToDateSavings = useMemo(() => {
+    if (!selectedSummary) return 0;
+    return data.history
+      .filter(
+        (month) =>
+          month.year === selectedSummary.year && month.month <= selectedSummary.month,
+      )
+      .reduce((sum, month) => sum + month.savings, 0);
+  }, [data.history, selectedSummary]);
 
   const categories =
     (selectedSummary &&
@@ -134,90 +145,97 @@ export function DashboardClient({ data }: DashboardClientProps) {
         <div className="pointer-events-none absolute -right-24 bottom-24 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.18),transparent_65%)] blur-3xl" />
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
-            Patri • bienestar financiero
-          </span>
-          <DashboardHeader summary={selectedSummary} goal={data.goal} />
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
+            <span className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
+              Patri • bienestar financiero
+            </span>
+            <DashboardHeader summary={selectedSummary} goal={data.goal} />
+          </div>
+          <ProgressCard
+            goal={data.goal}
+            current={selectedSummary.savings}
+            previousSavings={previousSummary?.savings ?? null}
+            yearToDateSavings={yearToDateSavings}
+          />
         </div>
-        <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs text-white/70 shadow-lg backdrop-blur">
-              Mes en análisis
+        <aside className="flex h-full flex-col gap-4">
+          <div className="flex flex-col gap-4 rounded-3xl border border-white/5 bg-black/35 p-5 text-white shadow-xl shadow-black/30 backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+                Configura tu vista
+              </span>
+              <ThemeToggle />
             </div>
-            <select
-              value={selectedMonthKey}
-              onChange={(event) => setSelectedMonthKey(event.target.value)}
-              className="rounded-full border border-white/10 bg-black/40 px-4 py-2 text-sm text-white shadow-lg shadow-black/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 dark:bg-slate-900/70"
-            >
-              {[...data.history]
-                .map((month) => ({ value: month.monthKey, label: month.label }))
-                .reverse()
-                .map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-            </select>
-            <ThemeToggle />
+            <div className="flex flex-col gap-3">
+              <label className="text-xs text-white/60">Mes en análisis</label>
+              <select
+                value={selectedMonthKey}
+                onChange={(event) => setSelectedMonthKey(event.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-2 text-sm text-white shadow-inner shadow-black/30 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 dark:bg-slate-900/70"
+              >
+                {[...data.history]
+                  .map((month) => ({ value: month.monthKey, label: month.label }))
+                  .reverse()
+                  .map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 p-1 text-sm text-white/70 shadow-inner shadow-black/20">
+              <button
+                type="button"
+                onClick={() => setActiveTab("overview")}
+                className={`flex-1 rounded-full px-4 py-2 transition ${
+                  activeTab === "overview"
+                    ? "bg-cyan-500/20 text-white shadow-inner shadow-cyan-400/30"
+                    : "hover:bg-white/10"
+                }`}
+              >
+                Resumen
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("transactions")}
+                className={`flex-1 rounded-full px-4 py-2 transition ${
+                  activeTab === "transactions"
+                    ? "bg-cyan-500/20 text-white shadow-inner shadow-cyan-400/30"
+                    : "hover:bg-white/10"
+                }`}
+              >
+                Partidas
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 p-1 text-sm text-white/70 shadow-lg shadow-black/20">
-            <button
-              type="button"
-              onClick={() => setActiveTab("overview")}
-              className={`rounded-full px-4 py-2 transition ${
-                activeTab === "overview"
-                  ? "bg-cyan-500/20 text-white shadow-inner shadow-cyan-400/30"
-                  : "hover:bg-white/10"
-              }`}
-            >
-              Resumen
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("transactions")}
-              className={`rounded-full px-4 py-2 transition ${
-                activeTab === "transactions"
-                  ? "bg-cyan-500/20 text-white shadow-inner shadow-cyan-400/30"
-                  : "hover:bg-white/10"
-              }`}
-            >
-              Partidas
-            </button>
-          </div>
-        </div>
-      </div>
+          <UploadWidget formId="upload-widget" />
+        </aside>
+      </section>
 
       {activeTab === "overview" ? (
         <>
-          <section className="grid gap-5 lg:grid-cols-4">
-            <div className="lg:col-span-3">
-              <ProgressCard goal={data.goal} current={selectedSummary.savings} />
-            </div>
-            <div className="lg:col-span-1">
-              <UploadWidget />
-            </div>
-          </section>
-
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {statCards.map((card) => (
               <StatCard key={card.label} {...card} />
             ))}
           </section>
 
-          <section className="grid gap-5 lg:grid-cols-12">
-            <div className="lg:col-span-8">
+          <section className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <div className="flex flex-col gap-5">
               <HistoryChart data={data.history} />
+              <AlertsCard alerts={alerts} />
+              {recommendations.length ? (
+                <RecommendationsCard recommendations={recommendations} />
+              ) : null}
+              <ExpenseAdvisorCard
+                summary={selectedSummary}
+                goal={data.goal}
+                categories={categories}
+              />
             </div>
-            <div className="lg:col-span-4">
-              <CategoryBreakdown categories={categories} />
-            </div>
-          </section>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            <AlertsCard alerts={alerts} />
-            <RecommendationsCard recommendations={recommendations} />
+            <CategoryBreakdown categories={categories} />
           </section>
         </>
       ) : (
@@ -225,6 +243,9 @@ export function DashboardClient({ data }: DashboardClientProps) {
           transactions={transactions}
           categories={categoryOptions}
           monthLabel={selectedSummary.label}
+          goal={data.goal}
+          savings={selectedSummary.savings}
+          alertsCount={alerts.length}
         />
       )}
     </div>

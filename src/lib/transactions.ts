@@ -21,12 +21,14 @@ export async function upsertTransactions(transactions: Transaction[]) {
     await sql`
       INSERT INTO transactions (
         id, user_id, bank_date, posted_date, description, raw_concept, observations,
-        amount, category, subcategory, type, month_key, source
+        amount, category, subcategory, type, month_key, source,
+        pending_category, categorization_source, ai_confidence, ai_reason
       )
       VALUES (
         ${tx.id}, ${tx.userId}, ${bankDate}, ${postedDate}, ${tx.description}, ${tx.rawConcept},
         ${tx.observations}, ${tx.amount}, ${tx.category}, ${tx.subcategory}, ${tx.type},
-        ${tx.monthKey}, ${tx.source}
+        ${tx.monthKey}, ${tx.source},
+        ${tx.pendingCategory}, ${tx.categorizationSource}, ${tx.aiConfidence ?? null}, ${tx.aiReason ?? null}
       );
     `;
   }
@@ -49,6 +51,10 @@ interface TransactionRow {
   monthKey: string;
   source: string | null;
   createdAt: string | null;
+  pendingCategory: boolean | null;
+  categorizationSource: string | null;
+  aiConfidence: number | null;
+  aiReason: string | null;
 }
 
 export async function getTransactions(userId: string) {
@@ -67,7 +73,11 @@ export async function getTransactions(userId: string) {
       type,
       month_key as "monthKey",
       source,
-      created_at::text as "createdAt"
+      created_at::text as "createdAt",
+      pending_category as "pendingCategory",
+      categorization_source as "categorizationSource",
+      ai_confidence::float as "aiConfidence",
+      ai_reason as "aiReason"
     FROM transactions
     WHERE user_id = ${userId}
     ORDER BY bank_date ASC;
@@ -87,6 +97,10 @@ export async function getTransactions(userId: string) {
     type: (row.type as Transaction["type"]) ?? "expense",
     monthKey: row.monthKey,
     source: row.source ?? null,
+    pendingCategory: Boolean(row.pendingCategory),
+    categorizationSource: (row.categorizationSource as Transaction["categorizationSource"]) ?? "heuristic",
+    aiConfidence: row.aiConfidence,
+    aiReason: row.aiReason ?? null,
     createdAt: row.createdAt ? new Date(row.createdAt) : undefined,
   }));
 }

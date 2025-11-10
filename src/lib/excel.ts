@@ -2,7 +2,12 @@ import { randomUUID } from "node:crypto";
 import { read, utils } from "xlsx";
 import { parse } from "date-fns";
 import { categorizeTransaction } from "./categorize";
-import type { Transaction } from "./types";
+import { UNCATEGORIZED_LABEL } from "./category-rules";
+import type {
+  CategorizationSource,
+  Transaction,
+  TransactionType,
+} from "./types";
 
 function parseDate(value: unknown): Date | null {
   if (!value) return null;
@@ -93,8 +98,17 @@ export function parseWorkbookToTransactions(
         amount,
       });
 
-      const category = fileCategory || inferred.category;
-      const type = amount >= 0 ? "income" : inferred.type;
+      let category = fileCategory || inferred.category;
+      const type: TransactionType =
+        amount >= 0 ? "income" : inferred.type ?? "expense";
+      let categorizationSource: CategorizationSource = fileCategory
+        ? "file"
+        : "heuristic";
+
+      if (!category.trim()) {
+        category = UNCATEGORIZED_LABEL;
+        categorizationSource = "heuristic";
+      }
 
       const monthKey = monthKeyFromDate(valueDate);
 
@@ -112,6 +126,10 @@ export function parseWorkbookToTransactions(
         type,
         monthKey,
         source: filename ?? sheetName,
+        pendingCategory: category === UNCATEGORIZED_LABEL,
+        categorizationSource,
+        aiConfidence: null,
+        aiReason: null,
       };
 
       return transaction;

@@ -25,7 +25,14 @@ const palette: Record<string, string> = {
   educacion: "from-cyan-400/80 via-cyan-500/40 to-cyan-900/50",
   tecnologia: "from-indigo-400/80 via-indigo-500/40 to-indigo-900/50",
   viajes: "from-rose-400/80 via-rose-500/40 to-rose-900/50",
-  transferencias: "from-amber-400/80 via-amber-500/40 to-amber-900/50",
+  transferencias: "from-emerald-400/80 via-emerald-500/40 to-emerald-900/40",
+  "transferencias-y-efectivo":
+    "from-emerald-300/90 via-emerald-400/60 to-emerald-900/30",
+  "vivienda-y-prestamos": "from-sky-300/80 via-sky-500/50 to-slate-900/40",
+  supermercado: "from-amber-300/80 via-amber-500/50 to-amber-900/30",
+  "ocio-y-entretenimiento":
+    "from-fuchsia-300/80 via-pink-500/50 to-purple-900/30",
+  suministros: "from-cyan-300/80 via-blue-500/50 to-slate-900/30",
   otros: "from-slate-400/80 via-slate-500/40 to-slate-900/50",
 };
 
@@ -39,7 +46,12 @@ const chartColors: Record<string, string> = {
   educacion: "#22d3ee",
   tecnologia: "#6366f1",
   viajes: "#f9739d",
-  transferencias: "#facc15",
+  transferencias: "#34d399",
+  "transferencias-y-efectivo": "#3dffb5",
+  "vivienda-y-prestamos": "#4cb5ff",
+  supermercado: "#facc15",
+  "ocio-y-entretenimiento": "#f472b6",
+  suministros: "#60a5fa",
   otros: "#94a3b8",
 };
 
@@ -67,10 +79,34 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
   if (!categories.length) {
-    return null;
+    return (
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="flex h-full flex-col justify-between gap-4 overflow-hidden rounded-3xl border border-dashed border-white/10 bg-white/5 p-6 text-white shadow-2xl shadow-black/30 backdrop-blur"
+      >
+        <header className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/40">
+            Dónde se va tu dinero
+          </p>
+          <h2 className="text-xl font-semibold tracking-tight text-white">
+            Aún sin categorías destacadas
+          </h2>
+        </header>
+        <p className="text-sm text-white/60">
+          Sube tu extracto más reciente para ver el reparto de gastos e ingresos y encontrar
+          oportunidades de ahorro.
+        </p>
+        <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.25em] text-white/50">
+          Actualiza tus datos arriba
+        </span>
+      </motion.section>
+    );
   }
 
   const chartData = categories.map((category) => {
+    const key = category.category.toLowerCase().replace(/\s+/g, "-");
     const value =
       category.type === "expense"
         ? Math.abs(category.total)
@@ -80,7 +116,8 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
       name: category.category,
       value,
       type: category.type,
-      color: chartColors[category.category] ?? chartColors.otros,
+      key,
+      color: chartColors[key] ?? chartColors.otros,
     };
   });
 
@@ -181,6 +218,7 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
 
         <ul className="space-y-4">
           {categories.map((category) => {
+            const paletteKey = category.category.toLowerCase().replace(/\s+/g, "-");
             const value =
               category.type === "expense"
                 ? Math.abs(category.total)
@@ -196,7 +234,7 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
                 className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 p-4 backdrop-blur"
               >
                 <div
-                  className={`pointer-events-none absolute inset-0 opacity-70 blur-3xl bg-gradient-to-r ${palette[category.category] ?? palette.otros}`}
+                  className={`pointer-events-none absolute inset-0 opacity-70 blur-3xl bg-gradient-to-r ${palette[paletteKey] ?? palette.otros}`}
                   style={{ width: `${Math.max(progress, 15)}%` }}
                 />
                 <div className="relative flex flex-col gap-2">

@@ -9,6 +9,9 @@ interface TransactionsTableProps {
   transactions: Transaction[];
   categories: string[];
   monthLabel: string;
+  goal: number;
+  savings: number;
+  alertsCount: number;
 }
 
 interface RowDraft {
@@ -34,6 +37,9 @@ export function TransactionsTable({
   transactions,
   categories,
   monthLabel,
+  goal,
+  savings,
+  alertsCount,
 }: TransactionsTableProps) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
@@ -96,6 +102,8 @@ export function TransactionsTable({
       ),
     [filtered],
   );
+
+  const remainingToGoal = Math.max(0, goal - savings);
 
   const handleDraftChange = (
     tx: Transaction,
@@ -198,10 +206,27 @@ export function TransactionsTable({
             </span>
           ) : null}
         </div>
-        <p className="text-sm text-white/60">
-          Ajusta la categoría y subcategoría de cada movimiento para mantener el
-          análisis actualizado.
-        </p>
+        <div className="flex flex-wrap items-center gap-3 text-sm text-white/70">
+          <p>
+            Ajusta categorías para alinear el análisis y cerrar el objetivo del mes.
+          </p>
+          <span
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
+              remainingToGoal > 0
+                ? "border border-amber-300/30 bg-amber-400/10 text-amber-200"
+                : "border border-emerald-300/30 bg-emerald-400/10 text-emerald-200"
+            }`}
+          >
+            {remainingToGoal > 0
+              ? `Faltan ${currencyFormatter.format(remainingToGoal)}`
+              : "Meta alcanzada"}
+          </span>
+          {alertsCount > 0 ? (
+            <span className="rounded-full border border-rose-300/50 bg-rose-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-rose-100">
+              {alertsCount} alerta{alertsCount === 1 ? "" : "s"} pendientes
+            </span>
+          ) : null}
+        </div>
       </header>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

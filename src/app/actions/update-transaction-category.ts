@@ -38,7 +38,13 @@ export async function updateTransactionCategoryAction(
 
     await sql`
       UPDATE transactions
-      SET category = ${category}, subcategory = ${subcategory}
+      SET
+        category = ${category},
+        subcategory = ${subcategory},
+        pending_category = FALSE,
+        categorization_source = 'manual',
+        ai_confidence = NULL,
+        ai_reason = NULL
       WHERE id = ${id};
     `;
 

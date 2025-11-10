@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Check } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import { updateTransactionCategoryAction } from "@/app/actions/update-transaction-category";
+import { upsertCategoryRuleAction } from "@/app/actions/upsert-category-rule";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
@@ -59,6 +60,7 @@ export function TransactionsTable({
   const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
     "all",
   );
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, DraftState>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Record<string, string>>({});
@@ -86,6 +88,7 @@ export function TransactionsTable({
 
     return transactions.filter((tx) => {
       if (typeFilter !== "all" && tx.type !== typeFilter) return false;
+      if (showPendingOnly && !tx.pendingCategory) return false;
       if (!tokens.length) return true;
 
       const haystack = [
@@ -100,7 +103,7 @@ export function TransactionsTable({
 
       return tokens.every((token) => haystack.includes(token));
     });
-  }, [transactions, search, typeFilter]);
+  }, [transactions, search, typeFilter, showPendingOnly]);
 
   const sortedTransactions = useMemo(
     () =>
@@ -131,6 +134,38 @@ export function TransactionsTable({
 
       return { ...prev, [tx.id]: next };
     });
+  };
+
+  const promptRulePropagation = async (tx: Transaction) => {
+    const applyFuture = window.confirm(
+      "¿Quieres que a partir de ahora los movimientos similares se asignen automáticamente a esta categoría?",
+    );
+
+    const applyHistory = window.confirm(
+      "¿Quieres que las entradas pasadas similares también se actualicen ahora?",
+    );
+
+    if (!applyFuture && !applyHistory) {
+      return;
+    }
+
+    setSavingId(tx.id);
+    setFeedback((prev) => ({ ...prev, [tx.id]: "Actualizando reglas…" }));
+
+    const result = await upsertCategoryRuleAction({
+      transactionId: tx.id,
+      applyToFuture: applyFuture,
+      applyToHistory: applyHistory,
+    });
+
+    setFeedback((prev) => ({
+      ...prev,
+      [tx.id]: result.success
+        ? "Reglas actualizadas."
+        : result.message ?? "No fue posible crear la regla.",
+    }));
+    setSavingId(null);
+    router.refresh();
   };
 
   const persistDraft = (tx: Transaction) => {
@@ -173,6 +208,17 @@ export function TransactionsTable({
       setFeedback((prev) => ({ ...prev, [tx.id]: "Cambios guardados." }));
       setSavingId(null);
       router.refresh();
+
+      if (
+        category.trim() !== (tx.category ?? "").trim() ||
+        (subcategory || "") !== (tx.subcategory ?? "")
+      ) {
+        await promptRulePropagation({
+          ...tx,
+          category,
+          subcategory,
+        });
+      }
     });
   };
 
@@ -240,6 +286,17 @@ export function TransactionsTable({
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={() => setShowPendingOnly((prev) => !prev)}
+            className={`h-10 rounded-full border px-4 text-xs font-semibold transition ${
+              showPendingOnly
+                ? "border-amber-400/40 bg-amber-500/10 text-amber-100"
+                : "border-white/10 bg-black/30 text-white/60 hover:bg-white/10"
+            }`}
+          >
+            {showPendingOnly ? "Ver todos" : "Solo pendientes"}
+          </button>
         </div>
         <span className="text-xs text-white/50">
           {sortedTransactions.length} movimientos
@@ -271,7 +328,14 @@ export function TransactionsTable({
               const status = feedback[tx.id];
 
               return (
-                <tr key={tx.id} className="transition hover:bg-white/5">
+                <tr
+                  key={tx.id}
+                  className={`transition ${
+                    tx.pendingCategory
+                      ? "bg-amber-500/5 hover:bg-amber-500/10"
+                      : "hover:bg-white/5"
+                  }`}
+                >
                   <td className="whitespace-nowrap px-4 py-3 align-top text-white/60">
                     {formatDate(tx.bankDate)}
                   </td>
@@ -279,6 +343,11 @@ export function TransactionsTable({
                     <div className="font-semibold text-white">
                       {tx.description || tx.rawConcept || "Sin descripción"}
                     </div>
+                    {tx.pendingCategory ? (
+                      <p className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-100">
+                        Pendiente
+                      </p>
+                    ) : null}
                     {tx.rawConcept &&
                     tx.rawConcept.trim().toLowerCase() !==
                       (tx.description ?? "").trim().toLowerCase() ? (

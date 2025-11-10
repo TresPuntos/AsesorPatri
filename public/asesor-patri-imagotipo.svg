@@ -1,0 +1,44 @@
+<svg width="512" height="192" viewBox="0 0 512 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="iconGradient" x1="48" y1="24" x2="112" y2="168" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B8BA5" />
+      <stop offset="0.55" stop-color="#2FBF9E" />
+      <stop offset="1" stop-color="#9FE870" />
+    </linearGradient>
+    <linearGradient id="textAccent" x1="0" y1="0" x2="180" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B8BA5" />
+      <stop offset="1" stop-color="#83E58B" />
+    </linearGradient>
+    <filter id="iconShadow" x="-30" y="-30" width="212" height="252" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feOffset dy="8" />
+      <feGaussianBlur stdDeviation="18" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0.047 0 0 0 0 0.102 0 0 0 0 0.082 0 0 0 0.28 0" />
+      <feBlend in2="SourceGraphic" />
+    </filter>
+  </defs>
+  <rect width="512" height="192" rx="40" fill="#F8FAFC" />
+  <g filter="url(#iconShadow)" transform="translate(32 16)">
+    <rect x="8" y="8" width="160" height="160" rx="48" fill="url(#iconGradient)" />
+    <path
+      d="M78 58.5c0-10.218 8.282-18.5 18.5-18.5h12c15.188 0 27.5 12.312 27.5 27.5S123.688 95 108.5 95h-26.2a4.3 4.3 0 0 0-4.3 4.3V128"
+      stroke="#EFFFF8"
+      stroke-width="12"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path d="M58 128L86 60l28 68" stroke="#F8FFFD" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="108" cy="66" r="9" fill="#F8FFFD" opacity="0.9" />
+  </g>
+  <g transform="translate(224 64)">
+    <text font-family="'Plus Jakarta Sans', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="44" font-weight="600" fill="#0F172A">
+      ASESOR
+    </text>
+    <text y="56" font-family="'Plus Jakarta Sans', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="60" font-weight="700" letter-spacing="0.02em" fill="url(#textAccent)">
+      PATRI
+    </text>
+    <text y="96" font-family="'Plus Jakarta Sans', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="20" font-weight="500" fill="#475569">
+      Asistente financiero con enfoque humano y crecimiento sostenible
+    </text>
+  </g>
+</svg>
+

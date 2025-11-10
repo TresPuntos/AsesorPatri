@@ -1,5 +1,7 @@
 export type TransactionType = "income" | "expense";
 
+export type CategorizationSource = "file" | "rule" | "ai" | "heuristic" | "manual";
+
 export interface Transaction {
   id: string;
   userId: string;
@@ -14,7 +16,24 @@ export interface Transaction {
   type: TransactionType;
   monthKey: string;
   source: string | null;
+  pendingCategory: boolean;
+  categorizationSource: CategorizationSource;
+  aiConfidence?: number | null;
+  aiReason?: string | null;
   createdAt?: Date;
+}
+
+export interface CategoryRule {
+  id: string;
+  userId: string;
+  pattern: string;
+  matchDescription: boolean;
+  matchObservations: boolean;
+  category: string;
+  subcategory: string | null;
+  type: TransactionType | null;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface CategorySummary {

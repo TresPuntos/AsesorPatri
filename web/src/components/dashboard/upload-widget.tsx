@@ -9,7 +9,11 @@ interface UploadState {
   message?: string;
 }
 
-export function UploadWidget() {
+interface UploadWidgetProps {
+  formId?: string;
+}
+
+export function UploadWidget({ formId }: UploadWidgetProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -17,6 +21,7 @@ export function UploadWidget() {
 
   return (
     <form
+      id={formId}
       ref={formRef}
       className="flex flex-col gap-4 rounded-3xl border border-dashed border-cyan-400/40 bg-cyan-500/10 p-6 text-cyan-100 transition hover:border-cyan-300/80 hover:bg-cyan-500/20"
       onSubmit={(event) => {

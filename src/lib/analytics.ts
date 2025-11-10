@@ -7,24 +7,7 @@ import type {
   Transaction,
 } from "./types";
 import { generateAIInsights, type InsightFacts } from "./insights";
-
-const PRESET_CATEGORIES = [
-  "Suministros",
-  "Ocio y Entretenimiento",
-  "Vivienda y Préstamos",
-  "Transferencias y Efectivo",
-  "BBVA",
-  "Otros Gastos Generales",
-  "Salud y Cuidado",
-  "Moto",
-  "Supermercado",
-  "Otros Ingresos",
-  "Ahorro",
-  "Educación",
-  "Viajes",
-  "Impuestos",
-  "Mascotas",
-];
+import { PRESET_CATEGORIES } from "./category-constants";
 
 function monthLabel(monthKey: string) {
   const [year, month] = monthKey.split("-").map(Number);
@@ -430,6 +413,15 @@ export async function createDashboardData(
       previousCategories,
       goal,
     );
+
+    const pendingCount = monthTransactions.filter(
+      (tx) => tx.pendingCategory,
+    ).length;
+    if (pendingCount > 0) {
+      baselineAlerts.unshift(
+        `Hay ${pendingCount} movimientos pendientes de categoría. Revísalos en la tabla de Partidas.`,
+      );
+    }
     const baselineRecommendations = buildRecommendations(
       summary,
       categories,

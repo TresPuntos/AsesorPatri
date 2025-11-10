@@ -18,7 +18,7 @@ function capitalize(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function buildMessaging(summary: MonthSummary, goal: number) {
+export function buildMessaging(summary: MonthSummary, goal: number) {
   const savings = summary.savings;
   const goalAchieved = savings >= goal;
   const positive = savings >= 0;

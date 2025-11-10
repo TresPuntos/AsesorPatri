@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 import { ensureDatabase } from "@/lib/db";
 import { parseWorkbookToTransactions } from "@/lib/excel";
 import { upsertTransactions } from "@/lib/transactions";
+import {
+  applyCategoryRules,
+  getCategoryRules,
+  UNCATEGORIZED_LABEL,
+} from "@/lib/category-rules";
+import { categorizeTransactionsWithAI } from "@/lib/ai-categorize";
 
 interface UploadResponse {
   success: boolean;
@@ -56,6 +62,60 @@ export async function uploadTransactionsAction(
     const transactions = parseWorkbookToTransactions(buffer, {
       filename: file.name,
     });
+
+    const userId = transactions[0]?.userId ?? "patri";
+
+    if (transactions.length) {
+      const rules = await getCategoryRules(userId);
+      applyCategoryRules(transactions, rules);
+
+      const candidates = transactions
+        .filter(
+          (tx) =>
+            tx.categorizationSource === "heuristic" ||
+            tx.category === UNCATEGORIZED_LABEL,
+        )
+        .map((tx) => ({
+          id: tx.id,
+          description: tx.description ?? "",
+          rawConcept: tx.rawConcept ?? "",
+          observations: tx.observations ?? "",
+          amount: tx.amount,
+          currency: "EUR",
+        }));
+
+      if (candidates.length) {
+        const aiResults = await categorizeTransactionsWithAI(candidates);
+        transactions.forEach((tx) => {
+          if (
+            tx.categorizationSource !== "heuristic" &&
+            tx.category !== UNCATEGORIZED_LABEL
+          ) {
+            return;
+          }
+
+          const match = aiResults.get(tx.id);
+          if (match && match.category) {
+            tx.category = match.category;
+            tx.subcategory = match.subcategory ?? tx.subcategory;
+            tx.type =
+              match.type ??
+              (tx.amount >= 0 ? "income" : ("expense" as const));
+            tx.pendingCategory = false;
+            tx.categorizationSource = "ai";
+            tx.aiConfidence = match.confidence ?? null;
+            tx.aiReason = match.reason ?? null;
+            return;
+          }
+
+          tx.category = UNCATEGORIZED_LABEL;
+          tx.pendingCategory = true;
+          tx.categorizationSource = "ai";
+          tx.aiConfidence = match?.confidence ?? null;
+          tx.aiReason = match?.reason ?? null;
+        });
+      }
+    }
 
     if (!transactions.length) {
       return {

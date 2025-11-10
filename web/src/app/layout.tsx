@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "Asesor Patri | Dashboard financiero mensual",
   description:
     "Asistente virtual de ahorro personal que analiza tus movimientos y te guía hacia tu objetivo de 200 € al mes.",
-  metadataBase: new URL("https://asesorpatri.vercel.app"),
+  metadataBase: new URL("https://asesor-patri.vercel.app"),
 };
 
 export default function RootLayout({
