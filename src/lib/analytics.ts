@@ -395,6 +395,9 @@ export async function createDashboardData(
   const alertsByMonth: Record<string, string[]> = {};
   const recommendationsByMonth: Record<string, string[]> = {};
 
+  const enableAIInsights =
+    (process.env.ENABLE_AI_INSIGHTS ?? "").toLowerCase() === "true";
+
   for (let index = 0; index < history.length; index += 1) {
     const summary = history[index];
     const monthTransactions = grouped.get(summary.monthKey) ?? [];
@@ -438,19 +441,31 @@ export async function createDashboardData(
       goal,
     );
 
-    const aiMessages = await generateAIInsights(facts);
-
     categoryBreakdownByMonth[summary.monthKey] = categories;
-    alertsByMonth[summary.monthKey] = mergeWithFallback(
-      aiMessages?.alerts,
-      baselineAlerts,
-      4,
-    );
-    recommendationsByMonth[summary.monthKey] = mergeWithFallback(
-      aiMessages?.recommendations,
-      baselineRecommendations,
-      3,
-    );
+    if (enableAIInsights) {
+      const aiMessages = await generateAIInsights(facts);
+      alertsByMonth[summary.monthKey] = mergeWithFallback(
+        aiMessages?.alerts,
+        baselineAlerts,
+        4,
+      );
+      recommendationsByMonth[summary.monthKey] = mergeWithFallback(
+        aiMessages?.recommendations,
+        baselineRecommendations,
+        3,
+      );
+    } else {
+      alertsByMonth[summary.monthKey] = mergeWithFallback(
+        null,
+        baselineAlerts,
+        4,
+      );
+      recommendationsByMonth[summary.monthKey] = mergeWithFallback(
+        null,
+        baselineRecommendations,
+        3,
+      );
+    }
   }
 
   const current = history.at(-1);
