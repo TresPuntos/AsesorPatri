@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
 import type { MonthSummary } from "@/lib/types";
 import { ThemeToggle } from "../theme-toggle";
 import { UploadWidget } from "./upload-widget";
@@ -69,39 +68,46 @@ function buildMessaging(summary: MonthSummary, goal: number) {
   };
 }
 
+const DONUT_RADIUS = 42;
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
+
 export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
   const messaging = summary ? buildMessaging(summary, goal) : null;
-  const tasks = [
-    "Guardar primero 50 € al cobrar y apartarlos en tu cuenta cripto.",
-    "Revisar suscripciones y cancelar las que no uses.",
-    "Planear un día low-cost para suavizar Supermercado y Ocio.",
-  ];
 
-  const { percentage, remaining, currentSavings } = useMemo(() => {
-    if (!summary) {
-      return {
-        percentage: 0,
-        remaining: Math.max(0, goal),
-        currentSavings: 0,
-      };
-    }
+  const { percentage, remaining, currentSavings, normalizedProgress } = useMemo(
+    () => {
+      if (!summary) {
+        return {
+          percentage: 0,
+          remaining: Math.max(0, goal),
+          currentSavings: 0,
+          normalizedProgress: 0,
+        };
+      }
 
-    if (goal === 0) {
+      if (goal === 0) {
+        return {
+          percentage: 0,
+          remaining: 0,
+          currentSavings: summary.savings,
+          normalizedProgress: 0,
+        };
+      }
+
+      const pct = Math.round((summary.savings / goal) * 100);
+      const normalized = Math.min(100, Math.max(0, pct));
+
       return {
-        percentage: 0,
-        remaining: 0,
+        percentage: pct,
+        remaining: Math.max(0, goal - summary.savings),
         currentSavings: summary.savings,
+        normalizedProgress: normalized,
       };
-    }
+    },
+    [goal, summary],
+  );
 
-    const pct = Math.round((summary.savings / goal) * 100);
-
-    return {
-      percentage: pct,
-      remaining: Math.max(0, goal - summary.savings),
-      currentSavings: summary.savings,
-    };
-  }, [goal, summary]);
+  const dashOffset = DONUT_CIRCUMFERENCE * (1 - normalizedProgress / 100);
 
   return (
     <motion.header
@@ -130,47 +136,64 @@ export function DashboardHeader({ summary, goal }: DashboardHeaderProps) {
                   : "Sube tu extracto para ver cómo va tu plan de ahorro y recibir consejos al instante."}
               </p>
             </div>
-            <div className="flex flex-col gap-2">
-              {tasks.map((task) => (
-                <div
-                  key={task}
-                  className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 shadow-inner shadow-black/30"
-                >
-                  <CheckCircle2 className="mt-0.5 size-4 text-cyan-300" />
-                  <span>{task}</span>
-                </div>
-              ))}
-            </div>
           </div>
           <div className="mt-2 flex w-full max-w-sm flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 text-sm text-white/80 shadow-inner shadow-black/30 backdrop-blur lg:mt-0">
             <div className="text-xs uppercase tracking-[0.3em] text-white/60">
               Objetivo del mes
             </div>
-            <div>
-              <p className="text-sm text-white/60">Llevas</p>
-              <p className="text-3xl font-semibold tracking-tight text-white">
-                {Number.isFinite(percentage) ? percentage : 0}%
-              </p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-3 shadow-inner shadow-black/20">
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.25em] text-white/50">
-                <span>Ahorro actual</span>
-                <span
-                  className={
-                    currentSavings >= 0 ? "text-emerald-200" : "text-rose-200"
-                  }
-                >
-                  {currency.format(currentSavings)}
-                </span>
+            <div className="flex items-center gap-4">
+              <div className="relative h-24 w-24">
+                <svg className="h-full w-full" viewBox="0 0 120 120">
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r={DONUT_RADIUS}
+                    stroke="rgba(255,255,255,0.1)"
+                    strokeWidth="10"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r={DONUT_RADIUS}
+                    stroke="#22d3ee"
+                    strokeWidth="10"
+                    fill="transparent"
+                    strokeDasharray={DONUT_CIRCUMFERENCE}
+                    strokeDashoffset={dashOffset}
+                    strokeLinecap="round"
+                    className="transition-all duration-500"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/60">
+                    Llevas
+                  </span>
+                  <span className="text-lg font-semibold">
+                    {Number.isFinite(percentage) ? percentage : 0}%
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 text-sm text-white/70">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-white/50">
+                    Ahorro actual
+                  </p>
+                  <p
+                    className={`text-lg font-semibold ${
+                      currentSavings >= 0 ? "text-emerald-200" : "text-rose-200"
+                    }`}
+                  >
+                    {currency.format(currentSavings)}
+                  </p>
+                </div>
+                <p className="text-xs uppercase tracking-[0.25em] text-white/50">
+                  Te faltan {currency.format(remaining)} para alcanzar los {currency.format(goal)}.
+                </p>
               </div>
             </div>
-            <p className="text-xs uppercase tracking-[0.25em] text-white/50">
-              Te faltan {currency.format(remaining)} para alcanzar los {currency.format(goal)}.
-            </p>
+            <UploadWidget variant="compact" />
           </div>
-        </div>
-        <div className="hidden lg:block">
-          <UploadWidget />
         </div>
       </div>
     </motion.header>

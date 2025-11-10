@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import type { DashboardData, MonthSummary } from "@/lib/types";
 import { DashboardHeader } from "./header";
-import { UploadWidget } from "./upload-widget";
 import { StatCard } from "./stat-card";
 import { HistoryChart } from "./history-chart";
 import { AlertsCard } from "./alerts-card";
@@ -220,7 +219,6 @@ export function DashboardClient({ data }: DashboardClientProps) {
             <div className="flex flex-col gap-6">
               <AlertsCard alerts={alerts} />
               <RecommendationsCard recommendations={recommendations} />
-              <UploadWidget />
             </div>
           </section>
         </>
