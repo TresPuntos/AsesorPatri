@@ -11,7 +11,6 @@ import { AlertsCard } from "./alerts-card";
 import { RecommendationsCard } from "./recommendations-card";
 import { CategoryBreakdown } from "./category-breakdown";
 import { TransactionsTable } from "./transactions-table";
-import { ThemeToggle } from "../theme-toggle";
 
 const currency = new Intl.NumberFormat("es-ES", {
   style: "currency",
@@ -184,9 +183,6 @@ export function DashboardClient({ data }: DashboardClientProps) {
                 </option>
               ))}
           </select>
-          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/10 p-1 shadow-inner shadow-black/20">
-            <ThemeToggle />
-          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-xs text-white/70 shadow-inner shadow-black/30">
           <button
@@ -237,21 +233,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
 
           <CategoryBreakdown categories={categories} />
 
-          <section className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <HistoryChart data={data.history} />
-            </div>
-            <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-black/25 p-6 text-sm text-white/70 shadow-2xl shadow-black/40">
-              <h3 className="text-lg font-semibold text-white">
-                Evolución en contexto
-              </h3>
-              <p>
-                Consulta la tendencia del balance y detecta meses atípicos para
-                revisar partidas concretas. Usa el selector superior para saltar
-                rápidamente a cualquier mes y ver sus detalles.
-              </p>
-            </div>
-          </section>
+          <HistoryChart data={data.history} />
         </>
       ) : (
         <TransactionsTable
