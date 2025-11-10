@@ -206,8 +206,8 @@ export function DashboardHeader({
       className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-black p-6 text-white shadow-2xl shadow-black/30 ring-1 ring-white/10"
     >
       <div className="absolute inset-x-0 -top-32 h-64 bg-[radial-gradient(circle_at_top,_rgba(45,212,191,0.25),transparent)]" />
-      <div className="relative flex flex-col gap-6 lg:flex-row">
-        <div className="flex flex-1 flex-col gap-4">
+      <div className="relative flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           <div>
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.32em] text-white/60 shadow-inner shadow-cyan-400/10">
               Dashboard financiero mensual
@@ -235,9 +235,7 @@ export function DashboardHeader({
             ))}
           </div>
         </div>
-        <div className="flex-1">
-          <HeroTrendChart data={chartData} />
-        </div>
+        <HeroTrendChart data={chartData} />
       </div>
     </motion.header>
   );
