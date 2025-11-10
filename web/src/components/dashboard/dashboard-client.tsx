@@ -42,8 +42,10 @@ export function DashboardClient({ data }: DashboardClientProps) {
   const defaultMonthKey =
     data.currentMonth?.monthKey ?? data.history.at(-1)?.monthKey ?? "";
 
-  const [selectedMonthKey, setSelectedMonthKey] = useState(defaultMonthKey);
+  const [manualMonthKey, setManualMonthKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "transactions">("overview");
+
+  const selectedMonthKey = manualMonthKey ?? defaultMonthKey;
 
   const selectedSummary = useMemo(
     () => data.history.find((month) => month.monthKey === selectedMonthKey),
@@ -145,8 +147,8 @@ export function DashboardClient({ data }: DashboardClientProps) {
         <div className="pointer-events-none absolute -right-24 bottom-24 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.18),transparent_65%)] blur-3xl" />
       </div>
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-6">
+      <section className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-7">
           <div className="flex flex-col gap-3">
             <span className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
               Patri • bienestar financiero
@@ -160,8 +162,8 @@ export function DashboardClient({ data }: DashboardClientProps) {
             yearToDateSavings={yearToDateSavings}
           />
         </div>
-        <aside className="flex h-full flex-col gap-4">
-          <div className="flex flex-col gap-4 rounded-3xl border border-white/5 bg-black/35 p-5 text-white shadow-xl shadow-black/30 backdrop-blur">
+        <aside className="flex h-full flex-col gap-6">
+          <div className="flex flex-col gap-5 rounded-3xl border border-white/5 bg-black/35 p-6 text-white shadow-xl shadow-black/30 backdrop-blur">
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs uppercase tracking-[0.3em] text-white/50">
                 Configura tu vista
@@ -172,7 +174,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
               <label className="text-xs text-white/60">Mes en análisis</label>
               <select
                 value={selectedMonthKey}
-                onChange={(event) => setSelectedMonthKey(event.target.value)}
+                onChange={(event) => setManualMonthKey(event.target.value)}
                 className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-2 text-sm text-white shadow-inner shadow-black/30 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 dark:bg-slate-900/70"
               >
                 {[...data.history]
@@ -210,7 +212,6 @@ export function DashboardClient({ data }: DashboardClientProps) {
               </button>
             </div>
           </div>
-          <UploadWidget formId="upload-widget" />
         </aside>
       </section>
 
@@ -222,8 +223,8 @@ export function DashboardClient({ data }: DashboardClientProps) {
             ))}
           </section>
 
-          <section className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-            <div className="flex flex-col gap-5">
+          <section className="grid gap-7 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
+            <div className="flex flex-col gap-6">
               <HistoryChart data={data.history} />
               <AlertsCard alerts={alerts} />
               {recommendations.length ? (
@@ -248,6 +249,25 @@ export function DashboardClient({ data }: DashboardClientProps) {
           alertsCount={alerts.length}
         />
       )}
+
+      <section className="rounded-3xl border border-dashed border-cyan-500/20 bg-cyan-500/5 p-6 shadow-[0_20px_60px_-32px_rgba(6,182,212,0.55)] backdrop-blur">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-xl space-y-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/70">
+              Actualiza tus datos
+            </p>
+            <h3 className="text-2xl font-semibold text-cyan-50">
+              Sube el extracto del último mes para refrescar tus métricas al instante.
+            </h3>
+            <p className="text-sm text-cyan-100/70">
+              Arrastra un archivo .xlsx o .csv o haz clic en el botón para elegirlo manualmente.
+            </p>
+          </div>
+          <div className="w-full max-w-xs shrink-0">
+            <UploadWidget formId="dashboard-upload-widget" />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
