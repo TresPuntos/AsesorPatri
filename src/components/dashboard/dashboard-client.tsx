@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import type { DashboardData, MonthSummary } from "@/lib/types";
 import { DashboardHeader } from "./header";
-import { ProgressCard } from "./progress-card";
 import { UploadWidget } from "./upload-widget";
 import { StatCard } from "./stat-card";
 import { HistoryChart } from "./history-chart";
@@ -144,17 +143,12 @@ export function DashboardClient({ data }: DashboardClientProps) {
         <div className="pointer-events-none absolute -right-24 bottom-24 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.18),transparent_65%)] blur-3xl" />
       </div>
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)]">
-        <DashboardHeader
-          summary={selectedSummary}
-          goal={data.goal}
-          history={data.history}
-        />
-        <div className="grid gap-3">
-          {statCards.map((card) => (
-            <StatCard key={card.label} {...card} />
-          ))}
-        </div>
+      <DashboardHeader summary={selectedSummary} goal={data.goal} />
+
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {statCards.map((card) => (
+          <StatCard key={card.label} {...card} />
+        ))}
       </section>
 
       <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-black/30 p-4 shadow-xl shadow-black/20 backdrop-blur-sm md:flex-row md:items-center md:justify-between">
@@ -217,23 +211,18 @@ export function DashboardClient({ data }: DashboardClientProps) {
 
       {activeTab === "overview" ? (
         <>
-          <section className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <HistoryChart data={data.history} />
+
+          <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="flex flex-col gap-6">
-              <ProgressCard
-                goal={data.goal}
-                current={selectedSummary.savings}
-              />
-              <UploadWidget />
+              <CategoryBreakdown categories={categories} />
             </div>
             <div className="flex flex-col gap-6">
               <AlertsCard alerts={alerts} />
               <RecommendationsCard recommendations={recommendations} />
+              <UploadWidget />
             </div>
           </section>
-
-          <CategoryBreakdown categories={categories} />
-
-          <HistoryChart data={data.history} />
         </>
       ) : (
         <TransactionsTable
