@@ -145,7 +145,6 @@ export function DashboardClient({ data }: DashboardClientProps) {
         <div className="pointer-events-none absolute -right-24 bottom-24 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.18),transparent_65%)] blur-3xl" />
       </div>
 
-<<<<<<< HEAD
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)]">
         <DashboardHeader summary={selectedSummary} goal={data.goal} />
         <div className="grid gap-3">
