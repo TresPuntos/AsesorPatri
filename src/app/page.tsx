@@ -19,7 +19,6 @@ async function Dashboard() {
 
   if (connectionString) {
     try {
-      await ensureDatabase();
       transactions = await getTransactions("patri");
     } catch (error) {
       console.error("No fue posible conectar con la base de datos:", error);
