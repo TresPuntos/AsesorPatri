@@ -41,7 +41,7 @@ export function AlertsCard({ alerts }: AlertsCardProps) {
         {alerts.map((alert, index) => (
           <li
             key={`${alert}-${index}`}
-            className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur"
+            className="rounded-2xl border border-white/10 bg-white/5 p-3 leading-relaxed backdrop-blur"
           >
             {alert}
           </li>

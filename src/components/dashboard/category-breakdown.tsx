@@ -13,6 +13,8 @@ import type { CategorySummary } from "@/lib/types";
 
 interface CategoryBreakdownProps {
   categories: CategorySummary[];
+  period?: "mes" | "año";
+  insight?: string;
 }
 
 const palette: Record<string, string> = {
@@ -72,9 +74,10 @@ interface TooltipContentProps {
       share: number;
     };
   }>;
+  periodLabel: "mes" | "año";
 }
 
-const CustomTooltip = ({ active, payload }: TooltipContentProps) => {
+const CustomTooltip = ({ active, payload, periodLabel }: TooltipContentProps) => {
   if (!active || !payload?.length) return null;
   const { name, value, type, share } = payload[0].payload;
 
@@ -85,7 +88,9 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps) => {
         {type === "expense" ? "-" : "+"}
         {currency.format(value)}
       </p>
-      <p className="text-xs text-white/60">{share.toFixed(1)} % del total del mes</p>
+      <p className="text-xs text-white/60">
+        {share.toFixed(1)} % del total del {periodLabel}
+      </p>
     </div>
   );
 };
@@ -98,7 +103,11 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]/g, "");
 }
 
-export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
+export function CategoryBreakdown({
+  categories,
+  period = "mes",
+  insight,
+}: CategoryBreakdownProps) {
   if (!categories.length) {
     return null;
   }
@@ -145,10 +154,11 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
           Dónde se va tu dinero
         </p>
         <h2 className="text-xl font-semibold tracking-tight text-white">
-          Categorías clave este mes
+          Categorías clave este {period}
         </h2>
         <p className="text-sm text-white/60">
-          Visualiza la mezcla de gastos e ingresos y detecta rápidamente los focos de ahorro.
+          {insight ??
+            "Visualiza la mezcla de gastos e ingresos y detecta rápidamente los focos de ahorro."}
         </p>
       </header>
 
@@ -189,7 +199,7 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
                             fontSize={12}
                             letterSpacing={3}
                           >
-                            TOTAL MES
+                            {`TOTAL ${period.toUpperCase()}`}
                           </text>
                           <text
                             x={cx}
@@ -206,7 +216,7 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
                     }}
                   />
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip periodLabel={period} />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -247,7 +257,7 @@ export function CategoryBreakdown({ categories }: CategoryBreakdownProps) {
                   <div className="flex items-center justify-between text-xs text-white/60">
                     <span>
                       {totalValue === 0
-                        ? "Sin impacto relevante este mes."
+                        ? `Sin impacto relevante este ${period}.`
                         : `Representa el ${share.toFixed(0)} % del total.`}
                     </span>
                     <span className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.3em] text-white/60">

@@ -25,7 +25,7 @@ export function RecommendationsCard({
         {recommendations.map((recommendation, index) => (
           <li
             key={`${recommendation}-${index}`}
-            className="rounded-2xl border border-cyan-400/10 bg-cyan-400/10 p-3"
+            className="rounded-2xl border border-cyan-400/10 bg-cyan-400/10 p-3 leading-relaxed"
           >
             {recommendation}
           </li>

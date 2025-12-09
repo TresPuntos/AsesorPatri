@@ -14,8 +14,12 @@ import {
 } from "recharts";
 import type { MonthSummary } from "@/lib/types";
 
+type HistoryChartMode = "monthly" | "yearly";
+
 interface HistoryChartProps {
   data: MonthSummary[];
+  mode?: HistoryChartMode;
+  insight?: string;
 }
 
 const currency = new Intl.NumberFormat("es-ES", {
@@ -61,7 +65,12 @@ function capitalize(label: string) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-export function HistoryChart({ data }: HistoryChartProps) {
+export function HistoryChart({ data, mode = "monthly", insight }: HistoryChartProps) {
+  const isYearly = mode === "yearly";
+  const title = isYearly ? "Evolución anual" : "Evolución mensual";
+  const subtitle = isYearly
+    ? "Ingresos, gastos y balance del año"
+    : "Ingresos, gastos y balance del mes";
   const chartData = data.reduce<
     Array<{ name: string; income: number; expenses: number; balance: number }>
   >((acc, month, index) => {
@@ -83,11 +92,16 @@ export function HistoryChart({ data }: HistoryChartProps) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-white/60">
-            Evolución mensual
+            {title}
           </p>
-          <p className="mt-2 text-xl font-semibold tracking-tight text-white">
-            Ingresos, gastos y balance del mes
-          </p>
+          <div className="mt-2 space-y-1">
+            <p className="text-xl font-semibold tracking-tight text-white">
+              {subtitle}
+            </p>
+            {insight ? (
+              <p className="text-xs text-white/55">{insight}</p>
+            ) : null}
+          </div>
         </div>
       </div>
       <div className="mt-6 h-72 w-full">

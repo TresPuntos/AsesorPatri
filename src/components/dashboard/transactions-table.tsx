@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Check } from "lucide-react";
 import type { Transaction } from "@/lib/types";
@@ -9,8 +9,10 @@ import { upsertCategoryRuleAction } from "@/app/actions/upsert-category-rule";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
+  yearTransactions?: Transaction[];
   categories: string[];
   monthLabel: string;
+  yearLabel?: string;
 }
 
 interface DraftState {
@@ -51,33 +53,60 @@ const currencyFormatter = new Intl.NumberFormat("es-ES", {
 });
 
 export function TransactionsTable({
-  transactions,
+  transactions: monthTransactions,
+  yearTransactions,
   categories,
   monthLabel,
+  yearLabel,
 }: TransactionsTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
-    "all",
-  );
+  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("__all__");
   const [showPendingOnly, setShowPendingOnly] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, DraftState>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
+  const [scope, setScope] = useState<"month" | "year">("month");
+
+  useEffect(() => {
+    setScope("month");
+  }, [monthLabel]);
 
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
     categories.forEach((option) => {
       if (option?.trim()) set.add(option.trim());
     });
-    transactions.forEach((tx) => {
+    monthTransactions.forEach((tx) => {
+      if (tx.category?.trim()) set.add(tx.category.trim());
+    });
+    yearTransactions?.forEach((tx) => {
       if (tx.category?.trim()) set.add(tx.category.trim());
     });
     return Array.from(set).sort((a, b) =>
       a.localeCompare(b, "es", { sensitivity: "base" }),
     );
-  }, [categories, transactions]);
+  }, [categories, monthTransactions, yearTransactions]);
+
+  const activeTransactions = useMemo(() => {
+    if (scope === "year" && yearTransactions?.length) {
+      return yearTransactions;
+    }
+    return monthTransactions;
+  }, [monthTransactions, scope, yearTransactions]);
+
+  const activeLabel = scope === "year" && yearLabel ? yearLabel : monthLabel;
+
+  const filterableCategories = useMemo(() => {
+    const options = [...categoryOptions];
+    const hasPending = activeTransactions.some((tx) => !(tx.category ?? "").trim());
+    if (hasPending) {
+      options.unshift("__uncategorized__");
+    }
+    return ["__all__", ...options];
+  }, [activeTransactions, categoryOptions]);
 
   const filteredTransactions = useMemo(() => {
     const tokens = search
@@ -86,9 +115,17 @@ export function TransactionsTable({
       .map((token) => token.trim())
       .filter(Boolean);
 
-    return transactions.filter((tx) => {
+    return activeTransactions.filter((tx) => {
       if (typeFilter !== "all" && tx.type !== typeFilter) return false;
       if (showPendingOnly && !tx.pendingCategory) return false;
+      if (categoryFilter === "__uncategorized__") {
+        if ((tx.category ?? "").trim()) return false;
+      } else if (
+        categoryFilter !== "__all__" &&
+        (tx.category ?? "").trim().toLowerCase() !== categoryFilter.toLowerCase()
+      ) {
+        return false;
+      }
       if (!tokens.length) return true;
 
       const haystack = [
@@ -103,7 +140,7 @@ export function TransactionsTable({
 
       return tokens.every((token) => haystack.includes(token));
     });
-  }, [transactions, search, typeFilter, showPendingOnly]);
+  }, [activeTransactions, search, typeFilter, showPendingOnly, categoryFilter]);
 
   const sortedTransactions = useMemo(
     () =>
@@ -113,6 +150,29 @@ export function TransactionsTable({
       ),
     [filteredTransactions],
   );
+  const pendingCount = useMemo(
+    () => activeTransactions.filter((tx) => tx.pendingCategory).length,
+    [activeTransactions],
+  );
+  const pendingAmount = useMemo(
+    () =>
+      activeTransactions.reduce((sum, tx) => {
+        if (!tx.pendingCategory) return sum;
+        return sum + Math.abs(tx.amount);
+      }, 0),
+    [activeTransactions],
+  );
+  const contextMessage = useMemo(() => {
+    if (!activeTransactions.length) {
+      return "Sube un extracto para analizar tus movimientos y activar sugerencias.";
+    }
+    if (pendingCount > 0) {
+      return `${pendingCount} movimientos sin categoría representan ${currencyFormatter.format(
+        pendingAmount,
+      )}. Clasifícalos para desbloquear recomendaciones precisas.`;
+    }
+    return "Todo clasificado. Añade reglas o notas para automatizar los próximos extractos y usa “Nueva categoría…” si necesitas otra etiqueta.";
+  }, [activeTransactions.length, pendingAmount, pendingCount]);
 
   const setDraftValue = (
     tx: Transaction,
@@ -240,7 +300,7 @@ export function TransactionsTable({
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-xl font-semibold tracking-tight">
-            Partidas de {monthLabel}
+            Partidas de {activeLabel}
           </h2>
           {isPending ? (
             <span className="flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-200">
@@ -249,10 +309,7 @@ export function TransactionsTable({
             </span>
           ) : null}
         </div>
-        <p className="text-sm text-white/60">
-          Ajusta las categorías de cada movimiento. Puedes crear nuevas
-          categorías con la opción “Nueva categoría…”.
-        </p>
+        <p className="text-sm text-white/60">{contextMessage}</p>
       </header>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -264,6 +321,55 @@ export function TransactionsTable({
             placeholder="Buscar por concepto, categoría o notas…"
             className="h-10 w-full rounded-full border border-white/10 bg-black/30 px-4 text-sm text-white shadow-inner shadow-black/40 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 sm:max-w-xl"
           />
+          {yearTransactions?.length ? (
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 p-1 text-xs text-white/70 shadow-inner shadow-black/40">
+              <button
+                type="button"
+                onClick={() => setScope("month")}
+                className={`rounded-full px-3 py-1 transition ${
+                  scope === "month" ? "bg-cyan-500/20 text-white" : "hover:bg-white/10"
+                }`}
+              >
+                {monthLabel}
+              </button>
+              <button
+                type="button"
+                onClick={() => setScope("year")}
+                className={`rounded-full px-3 py-1 transition ${
+                  scope === "year" ? "bg-cyan-500/20 text-white" : "hover:bg-white/10"
+                }`}
+              >
+                {yearLabel ?? "Año actual"}
+              </button>
+            </div>
+          ) : null}
+          <select
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+            className="h-10 rounded-full border border-white/10 bg-black/30 px-4 text-sm text-white shadow-inner shadow-black/40 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+          >
+            {filterableCategories.map((option) => {
+              if (option === "__all__") {
+                return (
+                  <option key={option} value={option}>
+                    Todas las categorías
+                  </option>
+                );
+              }
+              if (option === "__uncategorized__") {
+                return (
+                  <option key={option} value={option}>
+                    Sin categoría
+                  </option>
+                );
+              }
+              return (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              );
+            })}
+          </select>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 p-1 text-xs text-white/70 shadow-inner shadow-black/40">
             {[
               { label: "Todos", value: "all" },
@@ -303,8 +409,9 @@ export function TransactionsTable({
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-white/5 bg-black/20">
-        <table className="min-w-full divide-y divide-white/5 text-left text-sm text-white/80">
+      <div className="rounded-2xl border border-white/5 bg-black/20">
+        <div className="overflow-x-auto">
+          <table className="min-w-[680px] w-full divide-y divide-white/5 text-left text-sm text-white/80">
           <thead className="text-xs uppercase tracking-[0.25em] text-white/40">
             <tr>
               <th className="px-4 py-3 font-normal">Fecha</th>
@@ -429,7 +536,8 @@ export function TransactionsTable({
               </tr>
             ) : null}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
     </section>
   );
